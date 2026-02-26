@@ -397,7 +397,7 @@ export default function Home() {
             </p>
             <p className="flex items-center gap-2">
               <span className="text-purple-400">🖥️</span> Specializations: 
-              <span className="glitch-intensive" data-text=" Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage">
+              <span className="glitch-holographic" data-text=" Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage">
                  Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage
               </span>
             </p>
@@ -602,16 +602,21 @@ export default function Home() {
           font-family: 'Press Start 2P', cursive;
         }
 
-        /* INTENSIVER MODERNER GLITCH EFFEKT */
-        .glitch-intensive {
+        /* LANGSAMER HOLOGRAPHISCHER GLITCH EFFEKT */
+        .glitch-holographic {
           position: relative;
           color: #00ffff;
           font-weight: bold;
-          animation: glitch-skew 4s infinite;
+          display: inline-block;
+          animation: holographic-shimmer 8s infinite ease-in-out;
+          text-shadow: 
+            0 0 10px rgba(0, 255, 255, 0.5),
+            0 0 20px rgba(0, 255, 255, 0.3),
+            0 0 30px rgba(0, 255, 255, 0.2);
         }
 
-        .glitch-intensive::before,
-        .glitch-intensive::after {
+        .glitch-holographic::before,
+        .glitch-holographic::after {
           content: attr(data-text);
           position: absolute;
           top: 0;
@@ -620,82 +625,112 @@ export default function Home() {
           height: 100%;
           background: transparent;
           pointer-events: none;
+          opacity: 0.4;
+          mix-blend-mode: screen;
         }
 
-        .glitch-intensive::before {
-          animation: glitch-1 1.5s infinite linear alternate-reverse;
+        .glitch-holographic::before {
+          animation: glitch-slow-1 6s infinite ease-in-out;
           color: #ff00c1;
-          z-index: -1;
-          text-shadow: 2px 0 #ff00c1, -2px 0 #00fff9;
-          opacity: 0.8;
+          transform: translate(-3px, -2px);
+          filter: blur(1px);
+          text-shadow: 0 0 15px #ff00c1;
         }
 
-        .glitch-intensive::after {
-          animation: glitch-2 1.2s infinite linear alternate-reverse;
+        .glitch-holographic::after {
+          animation: glitch-slow-2 7s infinite ease-in-out;
           color: #00fff9;
-          z-index: -2;
-          text-shadow: 3px 0 #00fff9, -3px 0 #ff00c1;
-          opacity: 0.8;
+          transform: translate(3px, 2px);
+          filter: blur(1px);
+          text-shadow: 0 0 15px #00fff9;
         }
 
-        /* RGB Split Effekt */
-        .glitch-intensive {
-          text-shadow: 
-            0.05em 0 0 rgba(255, 0, 0, 0.75),
-            -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
-            0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
-          animation: glitch-shake 0.3s infinite;
+        @keyframes holographic-shimmer {
+          0%, 100% { 
+            filter: hue-rotate(0deg);
+            opacity: 1;
+          }
+          25% { 
+            filter: hue-rotate(10deg);
+            opacity: 0.95;
+          }
+          50% { 
+            filter: hue-rotate(20deg);
+            opacity: 0.9;
+          }
+          75% { 
+            filter: hue-rotate(10deg);
+            opacity: 0.95;
+          }
         }
 
-        @keyframes glitch-1 {
-          0% { clip-path: inset(20% 0 30% 0); transform: translate(-5px, 3px); }
-          10% { clip-path: inset(50% 0 10% 0); transform: translate(5px, -3px); }
-          20% { clip-path: inset(10% 0 60% 0); transform: translate(-8px, 2px); }
-          30% { clip-path: inset(70% 0 5% 0); transform: translate(8px, -2px); }
-          40% { clip-path: inset(30% 0 40% 0); transform: translate(-3px, -5px); }
-          50% { clip-path: inset(40% 0 30% 0); transform: translate(3px, 5px); }
-          60% { clip-path: inset(80% 0 5% 0); transform: translate(-6px, 1px); }
-          70% { clip-path: inset(15% 0 55% 0); transform: translate(6px, -1px); }
-          80% { clip-path: inset(45% 0 25% 0); transform: translate(-4px, 4px); }
-          90% { clip-path: inset(60% 0 15% 0); transform: translate(4px, -4px); }
-          100% { clip-path: inset(25% 0 45% 0); transform: translate(-2px, 2px); }
+        @keyframes glitch-slow-1 {
+          0%, 100% { 
+            clip-path: inset(0 0 0 0);
+            transform: translate(-3px, -2px);
+            opacity: 0.3;
+          }
+          20% { 
+            clip-path: inset(10% 0 20% 0);
+            transform: translate(-4px, -3px);
+            opacity: 0.5;
+          }
+          40% { 
+            clip-path: inset(30% 0 10% 0);
+            transform: translate(-2px, -4px);
+            opacity: 0.4;
+          }
+          60% { 
+            clip-path: inset(50% 0 5% 0);
+            transform: translate(-5px, -1px);
+            opacity: 0.6;
+          }
+          80% { 
+            clip-path: inset(15% 0 35% 0);
+            transform: translate(-1px, -5px);
+            opacity: 0.3;
+          }
         }
 
-        @keyframes glitch-2 {
-          0% { clip-path: inset(60% 0 10% 0); transform: translate(5px, -3px); }
-          10% { clip-path: inset(20% 0 50% 0); transform: translate(-5px, 3px); }
-          20% { clip-path: inset(40% 0 30% 0); transform: translate(8px, -2px); }
-          30% { clip-path: inset(10% 0 70% 0); transform: translate(-8px, 2px); }
-          40% { clip-path: inset(80% 0 5% 0); transform: translate(3px, 5px); }
-          50% { clip-path: inset(30% 0 40% 0); transform: translate(-3px, -5px); }
-          60% { clip-path: inset(50% 0 20% 0); transform: translate(6px, -1px); }
-          70% { clip-path: inset(70% 0 5% 0); transform: translate(-6px, 1px); }
-          80% { clip-path: inset(25% 0 45% 0); transform: translate(4px, -4px); }
-          90% { clip-path: inset(45% 0 25% 0); transform: translate(-4px, 4px); }
-          100% { clip-path: inset(35% 0 35% 0); transform: translate(2px, -2px); }
+        @keyframes glitch-slow-2 {
+          0%, 100% { 
+            clip-path: inset(0 0 0 0);
+            transform: translate(3px, 2px);
+            opacity: 0.3;
+          }
+          20% { 
+            clip-path: inset(25% 0 15% 0);
+            transform: translate(4px, 3px);
+            opacity: 0.5;
+          }
+          40% { 
+            clip-path: inset(45% 0 25% 0);
+            transform: translate(2px, 4px);
+            opacity: 0.4;
+          }
+          60% { 
+            clip-path: inset(60% 0 10% 0);
+            transform: translate(5px, 1px);
+            opacity: 0.6;
+          }
+          80% { 
+            clip-path: inset(35% 0 40% 0);
+            transform: translate(1px, 5px);
+            opacity: 0.3;
+          }
         }
 
-        @keyframes glitch-skew {
-          0% { transform: skew(0deg); }
-          10% { transform: skew(2deg); }
-          20% { transform: skew(-2deg); }
-          30% { transform: skew(1deg); }
-          40% { transform: skew(-1deg); }
-          50% { transform: skew(0deg); }
-          60% { transform: skew(-3deg); }
-          70% { transform: skew(3deg); }
-          80% { transform: skew(1deg); }
-          90% { transform: skew(-1deg); }
-          100% { transform: skew(0deg); }
+        /* Zusätzlicher sanfter Bewegungseffekt */
+        .glitch-holographic span {
+          display: inline-block;
+          animation: float-text 10s infinite ease-in-out;
         }
 
-        @keyframes glitch-shake {
-          0% { transform: translate(0); }
-          20% { transform: translate(-2px, 1px); }
-          40% { transform: translate(2px, -1px); }
-          60% { transform: translate(-1px, 2px); }
-          80% { transform: translate(1px, -2px); }
-          100% { transform: translate(0); }
+        @keyframes float-text {
+          0%, 100% { transform: translateY(0); }
+          25% { transform: translateY(-1px); }
+          50% { transform: translateY(1px); }
+          75% { transform: translateY(-1px); }
         }
       `}</style>
     </div>
