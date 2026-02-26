@@ -21,37 +21,23 @@ export default function Home() {
   const [transactions, setTransactions] = useState<GoldTransaction[]>([]);
   const [transactionId, setTransactionId] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
-  const [glitchActive, setGlitchActive] = useState(true);
   
-  // Ice particles - FIXED POSITIONS (ohne Math.random())
+  // Ice particles - FIXED POSITIONS
   const iceParticles = [
     { top: "10%", left: "20%" },
     { top: "30%", left: "70%" },
     { top: "60%", left: "40%" }
   ];
 
-  // Floating particles - FIXED POSITIONS (ohne Math.random())
+  // Floating particles - FIXED POSITIONS
   const floatingParticles = [
-    { x: 150, y: 200 },
-    { x: 300, y: 400 },
-    { x: 500, y: 100 },
-    { x: 700, y: 500 },
-    { x: 200, y: 600 },
-    { x: 800, y: 300 },
-    { x: 400, y: 700 },
-    { x: 600, y: 200 },
-    { x: 250, y: 450 },
-    { x: 750, y: 550 },
-    { x: 350, y: 150 },
-    { x: 450, y: 650 },
-    { x: 550, y: 350 },
-    { x: 650, y: 450 },
-    { x: 850, y: 250 },
-    { x: 150, y: 750 },
-    { x: 500, y: 500 },
-    { x: 300, y: 300 },
-    { x: 700, y: 700 },
-    { x: 400, y: 400 }
+    { x: 150, y: 200 }, { x: 300, y: 400 }, { x: 500, y: 100 },
+    { x: 700, y: 500 }, { x: 200, y: 600 }, { x: 800, y: 300 },
+    { x: 400, y: 700 }, { x: 600, y: 200 }, { x: 250, y: 450 },
+    { x: 750, y: 550 }, { x: 350, y: 150 }, { x: 450, y: 650 },
+    { x: 550, y: 350 }, { x: 650, y: 450 }, { x: 850, y: 250 },
+    { x: 150, y: 750 }, { x: 500, y: 500 }, { x: 300, y: 300 },
+    { x: 700, y: 700 }, { x: 400, y: 400 }
   ];
 
   // Nach dem Mounten setzen für client-seitige Features
@@ -59,19 +45,15 @@ export default function Home() {
     setIsMounted(true);
   }, []);
 
-  // Gold income simulation mit fliegendem Text
+  // Gold income simulation
   useEffect(() => {
     if (!isMounted) return;
     
     const interval = setInterval(() => {
-      // Random gold income zwischen 5 und 50 gold
       const income = Math.floor(Math.random() * 45) + 5;
+      const randomX = Math.random() * 100 - 50;
+      const randomY = Math.random() * 30 - 15;
       
-      // Zufällige Position für den fliegenden Text (im Bereich des Gold Counters)
-      const randomX = Math.random() * 100 - 50; // -50 bis 50 Pixel
-      const randomY = Math.random() * 30 - 15; // -15 bis 15 Pixel
-      
-      // Neue Transaktion hinzufügen
       const newTransaction = {
         id: transactionId,
         amount: income,
@@ -83,12 +65,11 @@ export default function Home() {
       setTransactionId(prev => prev + 1);
       setGold(prev => prev + income);
       
-      // Transaktion nach 2 Sekunden entfernen
       setTimeout(() => {
         setTransactions(prev => prev.filter(t => t.id !== newTransaction.id));
       }, 2000);
       
-    }, 3000); // Alle 3 Sekunden
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [transactionId, isMounted]);
@@ -105,19 +86,16 @@ export default function Home() {
     };
 
     window.addEventListener("mousemove", mouseMove);
-
-    return () => {
-      window.removeEventListener("mousemove", mouseMove);
-    };
+    return () => window.removeEventListener("mousemove", mouseMove);
   }, [isMounted]);
 
-  // Anime background images rotation
+  // Anime background rotation
   const [bgImage, setBgImage] = useState(0);
   const animeBackgrounds = [
-    "https://images.unsplash.com/photo-1578632749014-ca77efd052eb?q=80&w=2070", // Cyberpunk city
-    "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2070", // Neon samurai
-    "https://images.unsplash.com/photo-1563089145-599f8f12f6e3?q=80&w=2070", // Fantasy landscape
-    "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=2070", // Gaming setup
+    "https://images.unsplash.com/photo-1578632749014-ca77efd052eb?q=80&w=2070",
+    "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2070",
+    "https://images.unsplash.com/photo-1563089145-599f8f12f6e3?q=80&w=2070",
+    "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=2070",
   ];
 
   useEffect(() => {
@@ -146,7 +124,6 @@ export default function Home() {
     }
   };
 
-  // Während SSR nur eine minimale Version zeigen (ohne client-spezifische Features)
   if (!isMounted) {
     return (
       <div className="relative min-h-screen bg-black font-mono flex items-center justify-center">
@@ -157,7 +134,6 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen font-gaming overflow-hidden cursor-none">
-      {/* Fliegende Gold-Transaktionen - HALB SO GROß */}
       <AnimatePresence>
         {transactions.map((transaction) => (
           <motion.div
@@ -190,9 +166,7 @@ export default function Home() {
         transition={{ type: "spring", stiffness: 500, damping: 28 }}
       >
         <div className="relative w-8 h-8">
-          {/* Frostmourne blade */}
           <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_0_10px_rgba(0,255,255,0.7)]">
-            {/* Sword blade */}
             <motion.path
               d="M50 10 L60 40 L55 45 L52 60 L48 60 L45 45 L40 40 L50 10"
               fill="url(#iceGradient)"
@@ -207,12 +181,10 @@ export default function Home() {
               }}
               transition={{ duration: 2, repeat: Infinity }}
             />
-            {/* Skull hilt */}
             <circle cx="50" cy="65" r="8" fill="#2a4a5a" stroke="#8ccbd9" strokeWidth="2" />
             <circle cx="46" cy="62" r="1.5" fill="#ff0000" />
             <circle cx="54" cy="62" r="1.5" fill="#ff0000" />
             <path d="M45 70 L55 70" stroke="#8ccbd9" strokeWidth="2" />
-            {/* Ice effects */}
             <path d="M30 30 L35 25" stroke="#00ffff" strokeWidth="2" opacity="0.6" />
             <path d="M70 30 L65 25" stroke="#00ffff" strokeWidth="2" opacity="0.6" />
             <defs>
@@ -223,7 +195,6 @@ export default function Home() {
               </linearGradient>
             </defs>
           </svg>
-          {/* Ice particles - JETZT MIT FIXED POSITIONS */}
           <motion.div
             className="absolute top-0 left-0 w-full h-full"
             animate={{
@@ -246,7 +217,7 @@ export default function Home() {
         </div>
       </motion.div>
 
-      {/* Animated Anime Background with Parallax */}
+      {/* Animated Anime Background */}
       <motion.div
         className="fixed inset-0 z-0"
         animate={{
@@ -259,10 +230,8 @@ export default function Home() {
           filter: "brightness(0.4) saturate(1.2)",
         }}
       >
-        {/* Animated overlay for gaming effect */}
         <div className="absolute inset-0 bg-gradient-to-b from-purple-900/30 via-blue-900/20 to-black/50" />
         
-        {/* Floating particles - JETZT MIT FIXED POSITIONS */}
         {floatingParticles.map((particle, i) => (
           <motion.div
             key={i}
@@ -284,9 +253,8 @@ export default function Home() {
         ))}
       </motion.div>
 
-      {/* Main content with gaming style */}
+      {/* Main content */}
       <main className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full max-w-4xl mx-auto px-6 sm:px-16 py-16">
-        {/* Glassmorphism card with gaming aesthetics */}
         <motion.div
           className="w-full bg-black/40 backdrop-blur-md border-2 border-cyan-500/30 rounded-2xl shadow-2xl shadow-cyan-500/20 p-8 space-y-8"
           initial={{ scale: 0.9, opacity: 0 }}
@@ -295,7 +263,7 @@ export default function Home() {
           onHoverStart={() => setCursorVariant("hover")}
           onHoverEnd={() => setCursorVariant("default")}
         >
-          {/* Gaming-inspired header with RGB effect */}
+          {/* Header */}
           <motion.div
             className="text-center space-y-2"
             animate={{ textShadow: ["0 0 10px cyan", "0 0 20px blue", "0 0 10px cyan"] }}
@@ -311,7 +279,7 @@ export default function Home() {
             </div>
           </motion.div>
 
-          {/* Character Stats - NUR STR ist rot */}
+          {/* Character Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             {/* STR - Rot */}
             <motion.div
@@ -382,7 +350,7 @@ export default function Home() {
             </motion.div>
           </div>
 
-          {/* Character Bio with gaming theme */}
+          {/* Character Bio with HYPERREALISTIC GLITCH */}
           <motion.div
             className="space-y-3 text-cyan-300/80 border-l-4 border-cyan-500 pl-4 bg-black/30 p-4 rounded-r-lg"
             initial={{ x: -20, opacity: 0 }}
@@ -397,7 +365,7 @@ export default function Home() {
             </p>
             <p className="flex items-center gap-2">
               <span className="text-purple-400">🖥️</span> Specializations: 
-              <span className="glitch-holographic" data-text=" Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage">
+              <span className="glitch-hyperrealistic" data-text=" Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage">
                  Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage
               </span>
             </p>
@@ -406,7 +374,7 @@ export default function Home() {
             </p>
           </motion.div>
 
-          {/* GitHub as a quest item */}
+          {/* GitHub Quest */}
           <motion.a
             href="https://github.com/JimSchroeter"
             target="_blank"
@@ -428,13 +396,13 @@ export default function Home() {
             </div>
           </motion.a>
 
-          {/* JERMAINE'S EXACT MAIN RIG */}
+          {/* Main Rig */}
           <div className="space-y-3">
             <h2 className="text-xl text-yellow-400 flex items-center gap-2">
               <span>⚡</span> JERMAINE'S MAIN RIG - CUSTOM BUILD
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {/* CPU - Legendary */}
+              {/* CPU */}
               <motion.div
                 className="bg-black/60 border border-yellow-500/30 rounded-lg p-3 text-center hover:border-yellow-500 transition-all"
                 whileHover={{ y: -5, boxShadow: "0 0 20px #ffd700" }}
@@ -444,7 +412,7 @@ export default function Home() {
                 <div className="text-cyan-400 text-xs">4.8GHz (OC)</div>
               </motion.div>
 
-              {/* RAM - Epic */}
+              {/* RAM */}
               <motion.div
                 className="bg-black/60 border border-purple-500/30 rounded-lg p-3 text-center hover:border-purple-500 transition-all"
                 whileHover={{ y: -5, boxShadow: "0 0 20px purple" }}
@@ -454,7 +422,7 @@ export default function Home() {
                 <div className="text-purple-300 text-xs">32GB (2x16) DDR4 3600MHz</div>
               </motion.div>
 
-              {/* GPU - Legendary */}
+              {/* GPU */}
               <motion.div
                 className="bg-black/60 border border-yellow-500/30 rounded-lg p-3 text-center hover:border-yellow-500 transition-all"
                 whileHover={{ y: -5, boxShadow: "0 0 20px #ffd700" }}
@@ -464,7 +432,7 @@ export default function Home() {
                 <div className="text-cyan-400 text-xs">8GB GDDR6X</div>
               </motion.div>
 
-              {/* Mainboard - Rare */}
+              {/* Mainboard */}
               <motion.div
                 className="bg-black/60 border border-blue-500/30 rounded-lg p-3 text-center hover:border-blue-500 transition-all"
                 whileHover={{ y: -5, boxShadow: "0 0 20px blue" }}
@@ -474,7 +442,7 @@ export default function Home() {
                 <div className="text-blue-300 text-xs">DDR4 • PCIe 5.0</div>
               </motion.div>
 
-              {/* SSD - Epic */}
+              {/* SSD */}
               <motion.div
                 className="bg-black/60 border border-purple-500/30 rounded-lg p-3 text-center hover:border-purple-500 transition-all"
                 whileHover={{ y: -5, boxShadow: "0 0 20px purple" }}
@@ -484,7 +452,7 @@ export default function Home() {
                 <div className="text-purple-300 text-xs">1TB NVMe PCIe 4.0</div>
               </motion.div>
 
-              {/* PSU - Rare */}
+              {/* PSU */}
               <motion.div
                 className="bg-black/60 border border-blue-500/30 rounded-lg p-3 text-center hover:border-blue-500 transition-all"
                 whileHover={{ y: -5, boxShadow: "0 0 20px blue" }}
@@ -494,7 +462,7 @@ export default function Home() {
                 <div className="text-blue-300 text-xs">1000W • 80+ Gold</div>
               </motion.div>
 
-              {/* Case - Rare */}
+              {/* Case */}
               <motion.div
                 className="bg-black/60 border border-blue-500/30 rounded-lg p-3 text-center hover:border-blue-500 transition-all"
                 whileHover={{ y: -5, boxShadow: "0 0 20px blue" }}
@@ -504,7 +472,7 @@ export default function Home() {
                 <div className="text-blue-300 text-xs">Full Tower • Soundproof</div>
               </motion.div>
 
-              {/* Monitor - Rare */}
+              {/* Monitor */}
               <motion.div
                 className="bg-black/60 border border-blue-500/30 rounded-lg p-3 text-center hover:border-blue-500 transition-all"
                 whileHover={{ y: -5, boxShadow: "0 0 20px blue" }}
@@ -514,7 +482,7 @@ export default function Home() {
                 <div className="text-blue-300 text-xs">144Hz • 1ms • 2K WQHD</div>
               </motion.div>
 
-              {/* Webcam - Common */}
+              {/* Webcam */}
               <motion.div
                 className="bg-black/60 border border-gray-500/30 rounded-lg p-3 text-center hover:border-gray-500 transition-all"
                 whileHover={{ y: -5, boxShadow: "0 0 20px gray" }}
@@ -526,7 +494,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Networking & Troubleshooting Skills */}
+          {/* Skills */}
           <div className="space-y-3">
             <h2 className="text-xl text-green-400 flex items-center gap-2">
               <span>🌐</span> SKILL TREE - NETWORKING & TROUBLESHOOTING
@@ -575,7 +543,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Footer with gaming stats - Animated Gold */}
+          {/* Footer */}
           <motion.div
             className="flex justify-between text-xs text-cyan-500/70 border-t border-cyan-500/30 pt-4 relative"
             initial={{ opacity: 0 }}
@@ -602,21 +570,22 @@ export default function Home() {
           font-family: 'Press Start 2P', cursive;
         }
 
-        /* LANGSAMER HOLOGRAPHISCHER GLITCH EFFEKT */
-        .glitch-holographic {
+        /* HYPERREALISTISCHER GLITCH EFFEKT */
+        .glitch-hyperrealistic {
           position: relative;
           color: #00ffff;
           font-weight: bold;
           display: inline-block;
-          animation: holographic-shimmer 8s infinite ease-in-out;
+          animation: hyper-glitch 4s infinite cubic-bezier(0.25, 0.46, 0.45, 0.94);
           text-shadow: 
-            0 0 10px rgba(0, 255, 255, 0.5),
-            0 0 20px rgba(0, 255, 255, 0.3),
-            0 0 30px rgba(0, 255, 255, 0.2);
+            0 0 2px rgba(0, 255, 255, 0.8),
+            0 0 4px rgba(255, 0, 255, 0.5),
+            0 0 6px rgba(0, 255, 0, 0.3);
+          filter: contrast(1.2) brightness(1.1);
         }
 
-        .glitch-holographic::before,
-        .glitch-holographic::after {
+        .glitch-hyperrealistic::before,
+        .glitch-hyperrealistic::after {
           content: attr(data-text);
           position: absolute;
           top: 0;
@@ -625,112 +594,140 @@ export default function Home() {
           height: 100%;
           background: transparent;
           pointer-events: none;
-          opacity: 0.4;
           mix-blend-mode: screen;
         }
 
-        .glitch-holographic::before {
-          animation: glitch-slow-1 6s infinite ease-in-out;
-          color: #ff00c1;
-          transform: translate(-3px, -2px);
-          filter: blur(1px);
-          text-shadow: 0 0 15px #ff00c1;
+        .glitch-hyperrealistic::before {
+          animation: glitch-rgb-1 0.8s infinite steps(1);
+          color: #ff0000;
+          transform: translate(-2px, -1px);
+          filter: blur(0.3px);
+          opacity: 0.7;
+          text-shadow: 0 0 5px #ff0000;
         }
 
-        .glitch-holographic::after {
-          animation: glitch-slow-2 7s infinite ease-in-out;
-          color: #00fff9;
-          transform: translate(3px, 2px);
-          filter: blur(1px);
-          text-shadow: 0 0 15px #00fff9;
+        .glitch-hyperrealistic::after {
+          animation: glitch-rgb-2 0.9s infinite steps(1);
+          color: #0000ff;
+          transform: translate(2px, 1px);
+          filter: blur(0.3px);
+          opacity: 0.7;
+          text-shadow: 0 0 5px #0000ff;
         }
 
-        @keyframes holographic-shimmer {
+        /* Scanlines für Realismus */
+        .glitch-hyperrealistic {
+          background: linear-gradient(
+            transparent 50%,
+            rgba(0, 255, 255, 0.03) 50%
+          );
+          background-size: 100% 4px;
+          animation: scanlines 0.2s infinite linear;
+        }
+
+        /* Zusätzliche Glitch-Ebenen für Tiefe */
+        .glitch-hyperrealistic span {
+          display: inline-block;
+          animation: glitch-shake 2s infinite ease-in-out;
+        }
+
+        @keyframes hyper-glitch {
           0%, 100% { 
-            filter: hue-rotate(0deg);
-            opacity: 1;
+            transform: skew(0deg) scale(1);
+            filter: hue-rotate(0deg) contrast(1.2);
           }
-          25% { 
-            filter: hue-rotate(10deg);
-            opacity: 0.95;
+          10% { 
+            transform: skew(0.5deg) scale(1.01);
+            filter: hue-rotate(5deg) contrast(1.3);
+          }
+          20% { 
+            transform: skew(-0.3deg) scale(0.99);
+            filter: hue-rotate(-3deg) contrast(1.1);
+          }
+          30% { 
+            transform: skew(0.8deg) scale(1.02);
+            filter: hue-rotate(8deg) contrast(1.4);
+          }
+          40% { 
+            transform: skew(-0.5deg) scale(0.98);
+            filter: hue-rotate(-5deg) contrast(1.2);
           }
           50% { 
-            filter: hue-rotate(20deg);
-            opacity: 0.9;
-          }
-          75% { 
-            filter: hue-rotate(10deg);
-            opacity: 0.95;
-          }
-        }
-
-        @keyframes glitch-slow-1 {
-          0%, 100% { 
-            clip-path: inset(0 0 0 0);
-            transform: translate(-3px, -2px);
-            opacity: 0.3;
-          }
-          20% { 
-            clip-path: inset(10% 0 20% 0);
-            transform: translate(-4px, -3px);
-            opacity: 0.5;
-          }
-          40% { 
-            clip-path: inset(30% 0 10% 0);
-            transform: translate(-2px, -4px);
-            opacity: 0.4;
+            transform: skew(0deg) scale(1);
+            filter: hue-rotate(0deg) contrast(1.2);
           }
           60% { 
-            clip-path: inset(50% 0 5% 0);
-            transform: translate(-5px, -1px);
-            opacity: 0.6;
+            transform: skew(0.2deg) scale(1.01);
+            filter: hue-rotate(2deg) contrast(1.3);
+          }
+          70% { 
+            transform: skew(-0.4deg) scale(0.99);
+            filter: hue-rotate(-4deg) contrast(1.1);
           }
           80% { 
-            clip-path: inset(15% 0 35% 0);
-            transform: translate(-1px, -5px);
-            opacity: 0.3;
+            transform: skew(0.6deg) scale(1.02);
+            filter: hue-rotate(6deg) contrast(1.4);
+          }
+          90% { 
+            transform: skew(-0.2deg) scale(0.99);
+            filter: hue-rotate(-2deg) contrast(1.2);
           }
         }
 
-        @keyframes glitch-slow-2 {
-          0%, 100% { 
-            clip-path: inset(0 0 0 0);
-            transform: translate(3px, 2px);
-            opacity: 0.3;
-          }
-          20% { 
-            clip-path: inset(25% 0 15% 0);
-            transform: translate(4px, 3px);
-            opacity: 0.5;
-          }
-          40% { 
-            clip-path: inset(45% 0 25% 0);
-            transform: translate(2px, 4px);
-            opacity: 0.4;
-          }
-          60% { 
-            clip-path: inset(60% 0 10% 0);
-            transform: translate(5px, 1px);
-            opacity: 0.6;
-          }
-          80% { 
-            clip-path: inset(35% 0 40% 0);
-            transform: translate(1px, 5px);
-            opacity: 0.3;
-          }
+        @keyframes glitch-rgb-1 {
+          0%, 100% { clip-path: inset(0 0 0 0); opacity: 0.7; }
+          10% { clip-path: inset(10% 0 20% 0); opacity: 0.8; }
+          20% { clip-path: inset(40% 0 10% 0); opacity: 0.6; }
+          30% { clip-path: inset(60% 0 5% 0); opacity: 0.9; }
+          40% { clip-path: inset(20% 0 50% 0); opacity: 0.7; }
+          50% { clip-path: inset(80% 0 10% 0); opacity: 0.8; }
+          60% { clip-path: inset(30% 0 30% 0); opacity: 0.6; }
+          70% { clip-path: inset(50% 0 20% 0); opacity: 0.9; }
+          80% { clip-path: inset(70% 0 15% 0); opacity: 0.7; }
+          90% { clip-path: inset(15% 0 60% 0); opacity: 0.8; }
         }
 
-        /* Zusätzlicher sanfter Bewegungseffekt */
-        .glitch-holographic span {
-          display: inline-block;
-          animation: float-text 10s infinite ease-in-out;
+        @keyframes glitch-rgb-2 {
+          0%, 100% { clip-path: inset(0 0 0 0); opacity: 0.7; }
+          10% { clip-path: inset(30% 0 10% 0); opacity: 0.8; }
+          20% { clip-path: inset(50% 0 20% 0); opacity: 0.6; }
+          30% { clip-path: inset(10% 0 60% 0); opacity: 0.9; }
+          40% { clip-path: inset(70% 0 5% 0); opacity: 0.7; }
+          50% { clip-path: inset(40% 0 30% 0); opacity: 0.8; }
+          60% { clip-path: inset(80% 0 10% 0); opacity: 0.6; }
+          70% { clip-path: inset(20% 0 50% 0); opacity: 0.9; }
+          80% { clip-path: inset(60% 0 15% 0); opacity: 0.7; }
+          90% { clip-path: inset(45% 0 40% 0); opacity: 0.8; }
         }
 
-        @keyframes float-text {
-          0%, 100% { transform: translateY(0); }
-          25% { transform: translateY(-1px); }
-          50% { transform: translateY(1px); }
-          75% { transform: translateY(-1px); }
+        @keyframes glitch-shake {
+          0%, 100% { transform: translate(0, 0); }
+          10% { transform: translate(-1px, 0.5px); }
+          20% { transform: translate(1px, -0.5px); }
+          30% { transform: translate(-0.5px, 1px); }
+          40% { transform: translate(0.5px, -1px); }
+          50% { transform: translate(0, 0); }
+          60% { transform: translate(-0.8px, 0.3px); }
+          70% { transform: translate(0.8px, -0.3px); }
+          80% { transform: translate(-0.3px, 0.8px); }
+          90% { transform: translate(0.3px, -0.8px); }
+        }
+
+        @keyframes scanlines {
+          0% { background-position: 0 0; }
+          100% { background-position: 0 4px; }
+        }
+
+        /* Flacker-Effekt */
+        .glitch-hyperrealistic {
+          animation: flicker 0.15s infinite steps(1);
+        }
+
+        @keyframes flicker {
+          0%, 100% { opacity: 1; }
+          25% { opacity: 0.95; }
+          50% { opacity: 1; }
+          75% { opacity: 0.9; }
         }
       `}</style>
     </div>
