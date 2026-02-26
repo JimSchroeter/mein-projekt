@@ -127,13 +127,14 @@ export default function Home() {
   if (!isMounted) {
     return (
       <div className="relative min-h-screen bg-black font-mono flex items-center justify-center">
-        <div className="text-cyan-400">Loading Matrix...</div>
+        <div className="text-cyan-400">Loading...</div>
       </div>
     );
   }
 
   return (
     <div className="relative min-h-screen font-gaming overflow-hidden cursor-none">
+      {/* Fliegende Gold-Transaktionen */}
       <AnimatePresence>
         {transactions.map((transaction) => (
           <motion.div
@@ -279,12 +280,21 @@ export default function Home() {
             </div>
           </motion.div>
 
-          {/* Character Stats */}
+          {/* Character Stats mit leichtem Rahmen-Effekt */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             {/* STR - Rot */}
             <motion.div
-              className="bg-black/60 border border-cyan-500/30 rounded-lg p-3"
-              whileHover={{ scale: 1.05, borderColor: "#00ffff" }}
+              className="bg-black/60 border border-cyan-500/30 rounded-lg p-3 attribute-card"
+              whileHover={{ scale: 1.05 }}
+              animate={{
+                borderColor: ["rgba(0,255,255,0.3)", "rgba(255,0,0,0.5)", "rgba(0,255,255,0.3)"],
+                boxShadow: [
+                  "0 0 5px rgba(0,255,255,0.2)",
+                  "0 0 15px rgba(255,0,0,0.3)",
+                  "0 0 5px rgba(0,255,255,0.2)"
+                ]
+              }}
+              transition={{ duration: 3, repeat: Infinity }}
             >
               <div className="text-red-500 font-bold text-lg">STR</div>
               <div className="text-2xl text-white">92</div>
@@ -300,8 +310,17 @@ export default function Home() {
 
             {/* INT - Blau */}
             <motion.div
-              className="bg-black/60 border border-cyan-500/30 rounded-lg p-3"
-              whileHover={{ scale: 1.05, borderColor: "#00ffff" }}
+              className="bg-black/60 border border-cyan-500/30 rounded-lg p-3 attribute-card"
+              whileHover={{ scale: 1.05 }}
+              animate={{
+                borderColor: ["rgba(0,255,255,0.3)", "rgba(0,0,255,0.5)", "rgba(0,255,255,0.3)"],
+                boxShadow: [
+                  "0 0 5px rgba(0,255,255,0.2)",
+                  "0 0 15px rgba(0,0,255,0.3)",
+                  "0 0 5px rgba(0,255,255,0.2)"
+                ]
+              }}
+              transition={{ duration: 3, repeat: Infinity, delay: 0.2 }}
             >
               <div className="text-blue-400 font-bold text-lg">INT</div>
               <div className="text-2xl text-white">95</div>
@@ -317,8 +336,17 @@ export default function Home() {
 
             {/* AGI - Grün */}
             <motion.div
-              className="bg-black/60 border border-cyan-500/30 rounded-lg p-3"
-              whileHover={{ scale: 1.05, borderColor: "#00ffff" }}
+              className="bg-black/60 border border-cyan-500/30 rounded-lg p-3 attribute-card"
+              whileHover={{ scale: 1.05 }}
+              animate={{
+                borderColor: ["rgba(0,255,255,0.3)", "rgba(0,255,0,0.5)", "rgba(0,255,255,0.3)"],
+                boxShadow: [
+                  "0 0 5px rgba(0,255,255,0.2)",
+                  "0 0 15px rgba(0,255,0,0.3)",
+                  "0 0 5px rgba(0,255,255,0.2)"
+                ]
+              }}
+              transition={{ duration: 3, repeat: Infinity, delay: 0.4 }}
             >
               <div className="text-green-400 font-bold text-lg">AGI</div>
               <div className="text-2xl text-white">78</div>
@@ -334,8 +362,17 @@ export default function Home() {
 
             {/* STM - Gelb */}
             <motion.div
-              className="bg-black/60 border border-cyan-500/30 rounded-lg p-3"
-              whileHover={{ scale: 1.05, borderColor: "#00ffff" }}
+              className="bg-black/60 border border-cyan-500/30 rounded-lg p-3 attribute-card"
+              whileHover={{ scale: 1.05 }}
+              animate={{
+                borderColor: ["rgba(0,255,255,0.3)", "rgba(255,255,0,0.5)", "rgba(0,255,255,0.3)"],
+                boxShadow: [
+                  "0 0 5px rgba(0,255,255,0.2)",
+                  "0 0 15px rgba(255,255,0,0.3)",
+                  "0 0 5px rgba(0,255,255,0.2)"
+                ]
+              }}
+              transition={{ duration: 3, repeat: Infinity, delay: 0.6 }}
             >
               <div className="text-yellow-400 font-bold text-lg">STM</div>
               <div className="text-2xl text-white">88</div>
@@ -350,7 +387,7 @@ export default function Home() {
             </motion.div>
           </div>
 
-          {/* Character Bio with HYPERREALISTIC GLITCH + SIDEWAYS MOVEMENT */}
+          {/* Character Bio */}
           <motion.div
             className="space-y-3 text-cyan-300/80 border-l-4 border-cyan-500 pl-4 bg-black/30 p-4 rounded-r-lg"
             initial={{ x: -20, opacity: 0 }}
@@ -570,7 +607,36 @@ export default function Home() {
           font-family: 'Press Start 2P', cursive;
         }
 
-        /* HYPERREALISTISCHER GLITCH EFFEKT + SICHTBARE SEITWÄRTSBEWEGUNG */
+        /* Leichter Rahmen-Effekt für Attribute */
+        .attribute-card {
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .attribute-card::before {
+          content: '';
+          position: absolute;
+          top: -2px;
+          left: -2px;
+          right: -2px;
+          bottom: -2px;
+          background: linear-gradient(45deg, 
+            transparent 30%,
+            rgba(0, 255, 255, 0.1) 50%,
+            transparent 70%
+          );
+          border-radius: 10px;
+          z-index: -1;
+          animation: borderGlow 3s linear infinite;
+        }
+
+        @keyframes borderGlow {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        /* HYPERREALISTISCHER GLITCH EFFEKT */
         .glitch-hyperrealistic {
           position: relative;
           color: #00ffff;
@@ -619,22 +685,12 @@ export default function Home() {
           text-shadow: 0 0 5px #0000ff;
         }
 
-        /* DEUTLICHE SEITWÄRTSBEWEGUNG */
         @keyframes sideways-move {
           0% { transform: translateX(0); }
           25% { transform: translateX(-8px); }
           50% { transform: translateX(0); }
           75% { transform: translateX(8px); }
           100% { transform: translateX(0); }
-        }
-
-        /* Scanlines für Realismus */
-        .glitch-hyperrealistic {
-          background: linear-gradient(
-            transparent 50%,
-            rgba(0, 255, 255, 0.03) 50%
-          );
-          background-size: 100% 4px;
         }
 
         @keyframes hyper-glitch {
@@ -706,18 +762,18 @@ export default function Home() {
           90% { clip-path: inset(45% 0 40% 0); opacity: 0.8; }
         }
 
-        /* Flacker-Effekt */
-        .glitch-hyperrealistic {
-          animation: flicker 0.15s infinite steps(1);
-        }
-
         @keyframes flicker {
           0%, 100% { opacity: 1; }
           25% { opacity: 0.95; }
           50% { opacity: 1; }
           75% { opacity: 0.9; }
         }
+
+        .glitch-hyperrealistic {
+          animation: flicker 0.15s infinite steps(1);
+        }
       `}</style>
     </div>
   );
 }
+
