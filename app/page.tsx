@@ -352,7 +352,7 @@ export default function Home() {
             </p>
             <p className="flex items-center gap-2">
               <span className="text-purple-400">🖥️</span> Specializations: 
-              <span className="text-cyan-300"> Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage</span>
+              <span className="text-cyan-300 glitch-specializations"> Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage</span>
             </p>
             <p className="flex items-center gap-2">
               <span className="text-green-400">📅</span> Born: {birthYear}
@@ -553,6 +553,62 @@ export default function Home() {
         
         .font-gaming {
           font-family: 'Press Start 2P', cursive;
+        }
+
+        /* Moderne Glitch-Animation für die Spezialisierungen */
+        .glitch-specializations {
+          position: relative;
+          display: inline-block;
+          animation: glitch-text 3s infinite alternate;
+        }
+
+        .glitch-specializations::before,
+        .glitch-specializations::after {
+          content: attr(data-text);
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        }
+
+        .glitch-specializations::before {
+          animation: glitch-1 0.5s infinite linear alternate-reverse;
+          color: #ff00c1;
+          z-index: -1;
+        }
+
+        .glitch-specializations::after {
+          animation: glitch-2 0.5s infinite linear alternate-reverse;
+          color: #00fff9;
+          z-index: -2;
+        }
+
+        @keyframes glitch-text {
+          0% { transform: translate(0); opacity: 1; }
+          20% { transform: translate(-2px, 1px); }
+          40% { transform: translate(2px, -1px); }
+          60% { transform: translate(-1px, 2px); }
+          80% { transform: translate(1px, -2px); }
+          100% { transform: translate(0); }
+        }
+
+        @keyframes glitch-1 {
+          0% { clip-path: inset(20% 0 30% 0); transform: translate(-2px, 2px); }
+          20% { clip-path: inset(50% 0 10% 0); transform: translate(2px, -2px); }
+          40% { clip-path: inset(10% 0 60% 0); transform: translate(-3px, 1px); }
+          60% { clip-path: inset(70% 0 5% 0); transform: translate(3px, 1px); }
+          80% { clip-path: inset(30% 0 40% 0); transform: translate(-1px, -2px); }
+          100% { clip-path: inset(40% 0 30% 0); transform: translate(1px, 2px); }
+        }
+
+        @keyframes glitch-2 {
+          0% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+          20% { clip-path: inset(20% 0 50% 0); transform: translate(-2px, 2px); }
+          40% { clip-path: inset(40% 0 30% 0); transform: translate(3px, -1px); }
+          60% { clip-path: inset(10% 0 70% 0); transform: translate(-3px, 1px); }
+          80% { clip-path: inset(80% 0 5% 0); transform: translate(1px, -2px); }
+          100% { clip-path: inset(30% 0 40% 0); transform: translate(-1px, 2px); }
         }
       `}</style>
     </div>
