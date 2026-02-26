@@ -21,6 +21,7 @@ export default function Home() {
   const [transactions, setTransactions] = useState<GoldTransaction[]>([]);
   const [transactionId, setTransactionId] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
+  const [glitchActive, setGlitchActive] = useState(true);
   
   // Ice particles - FIXED POSITIONS (ohne Math.random())
   const iceParticles = [
@@ -310,31 +311,75 @@ export default function Home() {
             </div>
           </motion.div>
 
-          {/* Character Stats */}
+          {/* Character Stats - NUR STR ist rot */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-            {[
-              { label: "STR", value: "92", bgColor: "red", textColor: "red-500" },
-              { label: "INT", value: "95", bgColor: "blue", textColor: "blue-400" },
-              { label: "AGI", value: "78", bgColor: "green", textColor: "green-400" },
-              { label: "STM", value: "88", bgColor: "yellow", textColor: "yellow-400" }
-            ].map((stat, index) => (
-              <motion.div
-                key={index}
-                className="bg-black/60 border border-cyan-500/30 rounded-lg p-3"
-                whileHover={{ scale: 1.05, borderColor: "#00ffff" }}
-              >
-                <div className={`text-${stat.textColor} font-bold text-lg`}>{stat.label}</div>
-                <div className="text-2xl text-white">{stat.value}</div>
-                <div className="w-full bg-gray-700 h-1 rounded mt-1">
-                  <motion.div
-                    className={`bg-${stat.bgColor}-500 h-1 rounded`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${stat.value}%` }}
-                    transition={{ duration: 1, delay: index * 0.1 }}
-                  />
-                </div>
-              </motion.div>
-            ))}
+            {/* STR - Rot */}
+            <motion.div
+              className="bg-black/60 border border-cyan-500/30 rounded-lg p-3"
+              whileHover={{ scale: 1.05, borderColor: "#00ffff" }}
+            >
+              <div className="text-red-500 font-bold text-lg">STR</div>
+              <div className="text-2xl text-white">92</div>
+              <div className="w-full bg-gray-700 h-1 rounded mt-1">
+                <motion.div
+                  className="bg-red-500 h-1 rounded"
+                  initial={{ width: 0 }}
+                  animate={{ width: "92%" }}
+                  transition={{ duration: 1 }}
+                />
+              </div>
+            </motion.div>
+
+            {/* INT - Blau */}
+            <motion.div
+              className="bg-black/60 border border-cyan-500/30 rounded-lg p-3"
+              whileHover={{ scale: 1.05, borderColor: "#00ffff" }}
+            >
+              <div className="text-blue-400 font-bold text-lg">INT</div>
+              <div className="text-2xl text-white">95</div>
+              <div className="w-full bg-gray-700 h-1 rounded mt-1">
+                <motion.div
+                  className="bg-blue-500 h-1 rounded"
+                  initial={{ width: 0 }}
+                  animate={{ width: "95%" }}
+                  transition={{ duration: 1, delay: 0.1 }}
+                />
+              </div>
+            </motion.div>
+
+            {/* AGI - Grün */}
+            <motion.div
+              className="bg-black/60 border border-cyan-500/30 rounded-lg p-3"
+              whileHover={{ scale: 1.05, borderColor: "#00ffff" }}
+            >
+              <div className="text-green-400 font-bold text-lg">AGI</div>
+              <div className="text-2xl text-white">78</div>
+              <div className="w-full bg-gray-700 h-1 rounded mt-1">
+                <motion.div
+                  className="bg-green-500 h-1 rounded"
+                  initial={{ width: 0 }}
+                  animate={{ width: "78%" }}
+                  transition={{ duration: 1, delay: 0.2 }}
+                />
+              </div>
+            </motion.div>
+
+            {/* STM - Gelb */}
+            <motion.div
+              className="bg-black/60 border border-cyan-500/30 rounded-lg p-3"
+              whileHover={{ scale: 1.05, borderColor: "#00ffff" }}
+            >
+              <div className="text-yellow-400 font-bold text-lg">STM</div>
+              <div className="text-2xl text-white">88</div>
+              <div className="w-full bg-gray-700 h-1 rounded mt-1">
+                <motion.div
+                  className="bg-yellow-500 h-1 rounded"
+                  initial={{ width: 0 }}
+                  animate={{ width: "88%" }}
+                  transition={{ duration: 1, delay: 0.3 }}
+                />
+              </div>
+            </motion.div>
           </div>
 
           {/* Character Bio with gaming theme */}
@@ -352,7 +397,7 @@ export default function Home() {
             </p>
             <p className="flex items-center gap-2">
               <span className="text-purple-400">🖥️</span> Specializations: 
-              <span className="text-cyan-300 glitch-specializations"> Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage</span>
+              <span className="text-cyan-300 glitch-movie"> Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage</span>
             </p>
             <p className="flex items-center gap-2">
               <span className="text-green-400">📅</span> Born: {birthYear}
@@ -555,62 +600,78 @@ export default function Home() {
           font-family: 'Press Start 2P', cursive;
         }
 
-        /* Moderne Glitch-Animation für die Spezialisierungen */
-        .glitch-specializations {
+        /* MOVIE-STYLE GLITCH EFFEKT */
+        .glitch-movie {
           position: relative;
           display: inline-block;
-          animation: glitch-text 3s infinite alternate;
+          color: #00ffff;
+          animation: glitch-movie 3s infinite;
         }
 
-        .glitch-specializations::before,
-        .glitch-specializations::after {
-          content: attr(data-text);
+        .glitch-movie::before,
+        .glitch-movie::after {
+          content: attr(data-content);
           position: absolute;
           top: 0;
           left: 0;
           width: 100%;
           height: 100%;
+          background: black;
         }
 
-        .glitch-specializations::before {
-          animation: glitch-1 0.5s infinite linear alternate-reverse;
-          color: #ff00c1;
+        .glitch-movie::before {
+          animation: glitch-movie-1 0.3s infinite;
+          color: #ff00ff;
           z-index: -1;
+          clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+          transform: translate(-2px, -2px);
+          opacity: 0.8;
         }
 
-        .glitch-specializations::after {
-          animation: glitch-2 0.5s infinite linear alternate-reverse;
-          color: #00fff9;
+        .glitch-movie::after {
+          animation: glitch-movie-2 0.3s infinite;
+          color: #00ff00;
           z-index: -2;
+          clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
+          transform: translate(2px, 2px);
+          opacity: 0.8;
         }
 
-        @keyframes glitch-text {
-          0% { transform: translate(0); opacity: 1; }
-          20% { transform: translate(-2px, 1px); }
-          40% { transform: translate(2px, -1px); }
-          60% { transform: translate(-1px, 2px); }
-          80% { transform: translate(1px, -2px); }
-          100% { transform: translate(0); }
+        @keyframes glitch-movie {
+          0%, 100% { transform: none; opacity: 1; }
+          7% { transform: skew(-0.5deg, -0.9deg); opacity: 0.75; }
+          10% { transform: none; opacity: 1; }
+          27% { transform: none; opacity: 1; }
+          30% { transform: skew(0.8deg, -0.1deg); opacity: 0.75; }
+          35% { transform: none; opacity: 1; }
+          52% { transform: none; opacity: 1; }
+          55% { transform: skew(-1deg, 0.2deg); opacity: 0.75; }
+          58% { transform: none; opacity: 1; }
+          72% { transform: none; opacity: 1; }
+          75% { transform: skew(0.4deg, 1deg); opacity: 0.75; }
+          80% { transform: none; opacity: 1; }
+          90% { transform: none; opacity: 1; }
+          93% { transform: skew(-1deg, 0.2deg); opacity: 0.75; }
+          95% { transform: none; opacity: 1; }
         }
 
-        @keyframes glitch-1 {
-          0% { clip-path: inset(20% 0 30% 0); transform: translate(-2px, 2px); }
-          20% { clip-path: inset(50% 0 10% 0); transform: translate(2px, -2px); }
-          40% { clip-path: inset(10% 0 60% 0); transform: translate(-3px, 1px); }
-          60% { clip-path: inset(70% 0 5% 0); transform: translate(3px, 1px); }
-          80% { clip-path: inset(30% 0 40% 0); transform: translate(-1px, -2px); }
-          100% { clip-path: inset(40% 0 30% 0); transform: translate(1px, 2px); }
+        @keyframes glitch-movie-1 {
+          0%, 100% { clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%); transform: translate(-2px, -2px); }
+          20% { clip-path: polygon(0 15%, 100% 15%, 100% 30%, 0 30%); transform: translate(-3px, -1px); }
+          40% { clip-path: polygon(0 60%, 100% 60%, 100% 75%, 0 75%); transform: translate(-1px, -3px); }
+          60% { clip-path: polygon(0 30%, 100% 30%, 100% 55%, 0 55%); transform: translate(-4px, 0px); }
+          80% { clip-path: polygon(0 45%, 100% 45%, 100% 70%, 0 70%); transform: translate(0px, -2px); }
         }
 
-        @keyframes glitch-2 {
-          0% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
-          20% { clip-path: inset(20% 0 50% 0); transform: translate(-2px, 2px); }
-          40% { clip-path: inset(40% 0 30% 0); transform: translate(3px, -1px); }
-          60% { clip-path: inset(10% 0 70% 0); transform: translate(-3px, 1px); }
-          80% { clip-path: inset(80% 0 5% 0); transform: translate(1px, -2px); }
-          100% { clip-path: inset(30% 0 40% 0); transform: translate(-1px, 2px); }
+        @keyframes glitch-movie-2 {
+          0%, 100% { clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%); transform: translate(2px, 2px); }
+          20% { clip-path: polygon(0 70%, 100% 70%, 100% 90%, 0 90%); transform: translate(3px, 1px); }
+          40% { clip-path: polygon(0 80%, 100% 80%, 100% 95%, 0 95%); transform: translate(1px, 3px); }
+          60% { clip-path: polygon(0 50%, 100% 50%, 100% 85%, 0 85%); transform: translate(4px, 0px); }
+          80% { clip-path: polygon(0 40%, 100% 40%, 100% 70%, 0 70%); transform: translate(0px, 2px); }
         }
       `}</style>
     </div>
   );
 }
+
