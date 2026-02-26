@@ -397,7 +397,9 @@ export default function Home() {
             </p>
             <p className="flex items-center gap-2">
               <span className="text-purple-400">🖥️</span> Specializations: 
-              <span className="text-cyan-300 glitch-movie"> Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage</span>
+              <span className="glitch-intensive" data-text=" Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage">
+                 Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage
+              </span>
             </p>
             <p className="flex items-center gap-2">
               <span className="text-green-400">📅</span> Born: {birthYear}
@@ -600,78 +602,102 @@ export default function Home() {
           font-family: 'Press Start 2P', cursive;
         }
 
-        /* MOVIE-STYLE GLITCH EFFEKT */
-        .glitch-movie {
+        /* INTENSIVER MODERNER GLITCH EFFEKT */
+        .glitch-intensive {
           position: relative;
-          display: inline-block;
           color: #00ffff;
-          animation: glitch-movie 3s infinite;
+          font-weight: bold;
+          animation: glitch-skew 4s infinite;
         }
 
-        .glitch-movie::before,
-        .glitch-movie::after {
-          content: attr(data-content);
+        .glitch-intensive::before,
+        .glitch-intensive::after {
+          content: attr(data-text);
           position: absolute;
           top: 0;
           left: 0;
           width: 100%;
           height: 100%;
-          background: black;
+          background: transparent;
+          pointer-events: none;
         }
 
-        .glitch-movie::before {
-          animation: glitch-movie-1 0.3s infinite;
-          color: #ff00ff;
+        .glitch-intensive::before {
+          animation: glitch-1 1.5s infinite linear alternate-reverse;
+          color: #ff00c1;
           z-index: -1;
-          clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-          transform: translate(-2px, -2px);
+          text-shadow: 2px 0 #ff00c1, -2px 0 #00fff9;
           opacity: 0.8;
         }
 
-        .glitch-movie::after {
-          animation: glitch-movie-2 0.3s infinite;
-          color: #00ff00;
+        .glitch-intensive::after {
+          animation: glitch-2 1.2s infinite linear alternate-reverse;
+          color: #00fff9;
           z-index: -2;
-          clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
-          transform: translate(2px, 2px);
+          text-shadow: 3px 0 #00fff9, -3px 0 #ff00c1;
           opacity: 0.8;
         }
 
-        @keyframes glitch-movie {
-          0%, 100% { transform: none; opacity: 1; }
-          7% { transform: skew(-0.5deg, -0.9deg); opacity: 0.75; }
-          10% { transform: none; opacity: 1; }
-          27% { transform: none; opacity: 1; }
-          30% { transform: skew(0.8deg, -0.1deg); opacity: 0.75; }
-          35% { transform: none; opacity: 1; }
-          52% { transform: none; opacity: 1; }
-          55% { transform: skew(-1deg, 0.2deg); opacity: 0.75; }
-          58% { transform: none; opacity: 1; }
-          72% { transform: none; opacity: 1; }
-          75% { transform: skew(0.4deg, 1deg); opacity: 0.75; }
-          80% { transform: none; opacity: 1; }
-          90% { transform: none; opacity: 1; }
-          93% { transform: skew(-1deg, 0.2deg); opacity: 0.75; }
-          95% { transform: none; opacity: 1; }
+        /* RGB Split Effekt */
+        .glitch-intensive {
+          text-shadow: 
+            0.05em 0 0 rgba(255, 0, 0, 0.75),
+            -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+            0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+          animation: glitch-shake 0.3s infinite;
         }
 
-        @keyframes glitch-movie-1 {
-          0%, 100% { clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%); transform: translate(-2px, -2px); }
-          20% { clip-path: polygon(0 15%, 100% 15%, 100% 30%, 0 30%); transform: translate(-3px, -1px); }
-          40% { clip-path: polygon(0 60%, 100% 60%, 100% 75%, 0 75%); transform: translate(-1px, -3px); }
-          60% { clip-path: polygon(0 30%, 100% 30%, 100% 55%, 0 55%); transform: translate(-4px, 0px); }
-          80% { clip-path: polygon(0 45%, 100% 45%, 100% 70%, 0 70%); transform: translate(0px, -2px); }
+        @keyframes glitch-1 {
+          0% { clip-path: inset(20% 0 30% 0); transform: translate(-5px, 3px); }
+          10% { clip-path: inset(50% 0 10% 0); transform: translate(5px, -3px); }
+          20% { clip-path: inset(10% 0 60% 0); transform: translate(-8px, 2px); }
+          30% { clip-path: inset(70% 0 5% 0); transform: translate(8px, -2px); }
+          40% { clip-path: inset(30% 0 40% 0); transform: translate(-3px, -5px); }
+          50% { clip-path: inset(40% 0 30% 0); transform: translate(3px, 5px); }
+          60% { clip-path: inset(80% 0 5% 0); transform: translate(-6px, 1px); }
+          70% { clip-path: inset(15% 0 55% 0); transform: translate(6px, -1px); }
+          80% { clip-path: inset(45% 0 25% 0); transform: translate(-4px, 4px); }
+          90% { clip-path: inset(60% 0 15% 0); transform: translate(4px, -4px); }
+          100% { clip-path: inset(25% 0 45% 0); transform: translate(-2px, 2px); }
         }
 
-        @keyframes glitch-movie-2 {
-          0%, 100% { clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%); transform: translate(2px, 2px); }
-          20% { clip-path: polygon(0 70%, 100% 70%, 100% 90%, 0 90%); transform: translate(3px, 1px); }
-          40% { clip-path: polygon(0 80%, 100% 80%, 100% 95%, 0 95%); transform: translate(1px, 3px); }
-          60% { clip-path: polygon(0 50%, 100% 50%, 100% 85%, 0 85%); transform: translate(4px, 0px); }
-          80% { clip-path: polygon(0 40%, 100% 40%, 100% 70%, 0 70%); transform: translate(0px, 2px); }
+        @keyframes glitch-2 {
+          0% { clip-path: inset(60% 0 10% 0); transform: translate(5px, -3px); }
+          10% { clip-path: inset(20% 0 50% 0); transform: translate(-5px, 3px); }
+          20% { clip-path: inset(40% 0 30% 0); transform: translate(8px, -2px); }
+          30% { clip-path: inset(10% 0 70% 0); transform: translate(-8px, 2px); }
+          40% { clip-path: inset(80% 0 5% 0); transform: translate(3px, 5px); }
+          50% { clip-path: inset(30% 0 40% 0); transform: translate(-3px, -5px); }
+          60% { clip-path: inset(50% 0 20% 0); transform: translate(6px, -1px); }
+          70% { clip-path: inset(70% 0 5% 0); transform: translate(-6px, 1px); }
+          80% { clip-path: inset(25% 0 45% 0); transform: translate(4px, -4px); }
+          90% { clip-path: inset(45% 0 25% 0); transform: translate(-4px, 4px); }
+          100% { clip-path: inset(35% 0 35% 0); transform: translate(2px, -2px); }
+        }
+
+        @keyframes glitch-skew {
+          0% { transform: skew(0deg); }
+          10% { transform: skew(2deg); }
+          20% { transform: skew(-2deg); }
+          30% { transform: skew(1deg); }
+          40% { transform: skew(-1deg); }
+          50% { transform: skew(0deg); }
+          60% { transform: skew(-3deg); }
+          70% { transform: skew(3deg); }
+          80% { transform: skew(1deg); }
+          90% { transform: skew(-1deg); }
+          100% { transform: skew(0deg); }
+        }
+
+        @keyframes glitch-shake {
+          0% { transform: translate(0); }
+          20% { transform: translate(-2px, 1px); }
+          40% { transform: translate(2px, -1px); }
+          60% { transform: translate(-1px, 2px); }
+          80% { transform: translate(1px, -2px); }
+          100% { transform: translate(0); }
         }
       `}</style>
     </div>
   );
 }
-
