@@ -350,7 +350,7 @@ export default function Home() {
             </motion.div>
           </div>
 
-          {/* Character Bio with HYPERREALISTIC GLITCH */}
+          {/* Character Bio with HYPERREALISTIC GLITCH + SIDEWAYS MOVEMENT */}
           <motion.div
             className="space-y-3 text-cyan-300/80 border-l-4 border-cyan-500 pl-4 bg-black/30 p-4 rounded-r-lg"
             initial={{ x: -20, opacity: 0 }}
@@ -570,13 +570,15 @@ export default function Home() {
           font-family: 'Press Start 2P', cursive;
         }
 
-        /* HYPERREALISTISCHER GLITCH EFFEKT */
+        /* HYPERREALISTISCHER GLITCH EFFEKT + SICHTBARE SEITWÄRTSBEWEGUNG */
         .glitch-hyperrealistic {
           position: relative;
           color: #00ffff;
           font-weight: bold;
           display: inline-block;
-          animation: hyper-glitch 4s infinite cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          animation: 
+            hyper-glitch 4s infinite cubic-bezier(0.25, 0.46, 0.45, 0.94),
+            sideways-move 2s infinite ease-in-out;
           text-shadow: 
             0 0 2px rgba(0, 255, 255, 0.8),
             0 0 4px rgba(255, 0, 255, 0.5),
@@ -598,21 +600,32 @@ export default function Home() {
         }
 
         .glitch-hyperrealistic::before {
-          animation: glitch-rgb-1 0.8s infinite steps(1);
+          animation: 
+            glitch-rgb-1 0.8s infinite steps(1),
+            sideways-move 2.1s infinite ease-in-out;
           color: #ff0000;
-          transform: translate(-2px, -1px);
           filter: blur(0.3px);
           opacity: 0.7;
           text-shadow: 0 0 5px #ff0000;
         }
 
         .glitch-hyperrealistic::after {
-          animation: glitch-rgb-2 0.9s infinite steps(1);
+          animation: 
+            glitch-rgb-2 0.9s infinite steps(1),
+            sideways-move 1.9s infinite ease-in-out;
           color: #0000ff;
-          transform: translate(2px, 1px);
           filter: blur(0.3px);
           opacity: 0.7;
           text-shadow: 0 0 5px #0000ff;
+        }
+
+        /* DEUTLICHE SEITWÄRTSBEWEGUNG */
+        @keyframes sideways-move {
+          0% { transform: translateX(0); }
+          25% { transform: translateX(-8px); }
+          50% { transform: translateX(0); }
+          75% { transform: translateX(8px); }
+          100% { transform: translateX(0); }
         }
 
         /* Scanlines für Realismus */
@@ -622,13 +635,6 @@ export default function Home() {
             rgba(0, 255, 255, 0.03) 50%
           );
           background-size: 100% 4px;
-          animation: scanlines 0.2s infinite linear;
-        }
-
-        /* Zusätzliche Glitch-Ebenen für Tiefe */
-        .glitch-hyperrealistic span {
-          display: inline-block;
-          animation: glitch-shake 2s infinite ease-in-out;
         }
 
         @keyframes hyper-glitch {
@@ -698,24 +704,6 @@ export default function Home() {
           70% { clip-path: inset(20% 0 50% 0); opacity: 0.9; }
           80% { clip-path: inset(60% 0 15% 0); opacity: 0.7; }
           90% { clip-path: inset(45% 0 40% 0); opacity: 0.8; }
-        }
-
-        @keyframes glitch-shake {
-          0%, 100% { transform: translate(0, 0); }
-          10% { transform: translate(-1px, 0.5px); }
-          20% { transform: translate(1px, -0.5px); }
-          30% { transform: translate(-0.5px, 1px); }
-          40% { transform: translate(0.5px, -1px); }
-          50% { transform: translate(0, 0); }
-          60% { transform: translate(-0.8px, 0.3px); }
-          70% { transform: translate(0.8px, -0.3px); }
-          80% { transform: translate(-0.3px, 0.8px); }
-          90% { transform: translate(0.3px, -0.8px); }
-        }
-
-        @keyframes scanlines {
-          0% { background-position: 0 0; }
-          100% { background-position: 0 4px; }
         }
 
         /* Flacker-Effekt */
