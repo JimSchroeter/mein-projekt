@@ -1,4 +1,4 @@
-# 🎮 Jermaine S. - Portfolio / Character Sheet
+# ⚔️ Jermaine S. – Portfolio / Character Sheet
 
 <div align="center">
 
@@ -10,12 +10,12 @@
 
 <br>
 
-<img src="public/next.svg" alt="Logo" width="200"/>
+<img src="/vercel.svg" alt="Logo" width="200"/>
 
-### ⚔️ LEVEL 35 SYSTEM ENGINEER ⚔️
+### 🎮 LEVEL 35 – SYSTEM ENGINEER
 
-[![Live Demo](https://img.shields.io/badge/LIVE_DEMO-00ffff?style=for-the-badge&logo=vercel&logoColor=black&labelColor=black)](https://deine-domain.vercel.app)
-[![GitHub](https://img.shields.io/badge/GitHub-JimSchroeter-ff69b4?style=for-the-badge&logo=github&logoColor=ff69b4&labelColor=black)](https://github.com/JimSchroeter)
+[![Live Demo](https://img.shields.io/badge/LIVE_DEMO-00ffff?style=for-the-badge&logo=vercel&logoColor=black&labelColor=black)](https://mein-projekt.vercel.app)
+[![GitHub](https://img.shields.io/badge/GitHub-JimSchroeter-ff69b4?style=for-the-badge&logo=github&logoColor=ff69b4&labelColor=black)](https://github.com/JimSchroeter/mein-projekt)
 
 </div>
 
@@ -23,113 +23,115 @@
 
 ## 📜 Über das Projekt
 
-Ein **interaktives Portfolio** im Gaming-UI-Stil, das als persönliche "Character Sheet" gestaltet ist. Die Seite präsentiert meine Identität als **IT System Electronics Engineer** aus Berlin mit einer Leidenschaft für PC-Building – verpackt in ein modernes, hyperrealistisches Gaming-Interface.
+Ein **interaktives Portfolio** im Gaming-UI-Stil, gestaltet als persönliches „Character Sheet“.  
+Die Seite präsentiert mich als **IT-Systemelektroniker** aus Berlin mit einer Leidenschaft für PC-Building und Retro-Gaming-Ästhetik – verpackt in ein hyperrealistisches Gaming-Interface.
 
 ### ✨ Features
 
-| Kategorie | Features |
-|-----------|----------|
-| **🎯 Design** | • Gaming-inspiriertes UI mit Character-Stats<br>• PS1-Ästhetik mit modernem Touch<br>• Anime-Cyberpunk Background-Slider |
-| **⚡ Animationen** | • Frostmourne Custom Cursor mit Ice-Effekten<br>• Hyperrealistischer Text-Glitch für Specializations<br>• Fliegende Gold-Transaktionen mit Fade-Effekt<br>• Pulsierende Rahmen bei Attributen |
-| **🛠️ Interaktivität** | • Live-Gold-Simulation (alle 3 Sekunden)<br>• Hover-Effekte auf allen Karten<br>• Custom Cursor mit Varianten<br>• Mouse-Tracking für Gold-Floating |
-| **📱 Responsive** | • Vollständig responsive für alle Devices<br>• Optimierte Grid-Layouts<br>• Mobile-first Design |
+| Kategorie             | Features                                                                                  |
+|----------------------|-------------------------------------------------------------------------------------------|
+| **🎯 Design**         | • Gaming-inspiriertes UI mit Character-Stats<br>• PS1-Ästhetik trifft modernes Design<br>• Anime-Cyberpunk Background-Slider |
+| **⚡ Animationen**     | • Frostmourne Custom Cursor mit Eis-Effekten<br>• Text-Glitch bei Specializations<br>• Fliegende Gold-Transaktionen mit Fade-Effekt<br>• Pulsierende Rahmen bei Attributen |
+| **🛠️ Interaktivität** | • Live-Gold-System (alle 3 Sekunden)<br>• Hover-Effekte auf allen Karten<br>• Custom Cursor mit Varianten<br>• Mouse-Tracking für Gold-Floating |
+| **📱 Responsive**      | • Vollständig responsive<br>• Optimierte Grid-Layouts<br>• Mobile-First-Design           |
 
 ---
 
 ## 🚀 Technologie-Stack
 
-### **Core**
-- **[Next.js 15](https://nextjs.org/)** - React Framework mit App Router
-- **[React 19](https://react.dev/)** - UI Library
-- **[TypeScript](https://www.typescriptlang.org/)** - Typensicherheit
+### Core
+- **[Next.js 15](https://nextjs.org/)** – App Router, Server Components
+- **[React 19](https://react.dev/)** – Modernste UI-Bibliothek
+- **[TypeScript](https://www.typescriptlang.org/)** – Typsicherheit und bessere DX
 
-### **Styling & Animation**
-- **[Tailwind CSS 4](https://tailwindcss.com/)** - Utility-first CSS
-- **[Framer Motion](https://www.framer.com/motion/)** - Professionelle Animationen
-- **[Styled JSX](https://github.com/vercel/styled-jsx)** - CSS-in-JS für komplexe Effekte
-- **[Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P)** - Retro-Gaming Font
+### Styling & Animation
+- **[Tailwind CSS 4](https://tailwindcss.com/)** – Utility-first Styling
+- **[Framer Motion](https://www.framer.com/motion/)** – Performante Animationen
+- **[Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P)** – Retro-Gaming Font
 
 ---
 
 ## 📁 Projektstruktur
-jermaine-portfolio/
-├── app/
-│ ├── page.tsx # Hauptkomponente (Character Sheet)
-│ └── layout.tsx # Root Layout
-├── public/
-│ └── next.svg # Logo (optional)
-├── styles/
-│ └── globals.css # Globale Styles
-├── package.json
-├── tsconfig.json
-├── tailwind.config.js
-├── postcss.config.js
-├── next.config.js
-├── .gitignore
+---
+mein-projekt/<br>
+├── app/<br>
+│ ├── page.tsx # Hauptkomponente (Character Sheet)<br>
+│ └── layout.tsx # Root Layout mit Metadaten<br>
+├── public/<br>
+│ └── (Bilder, Icons) # Statische Assets<br>
+├── styles/<br>
+│ └── globals.css # Globale Styles und Tailwind-Imports<br>
+├── package.json<br>
+├── tsconfig.json<br>
+├── tailwind.config.js<br>
+├── postcss.config.js<br>
+├── next.config.js<br>
+├── .gitignore<br>
 └── README.md
 
+## ⚔️ Features im Detail
 
----
+### Character Stats System
+| Attribut | Farbe   | Effekt                      |
+|----------|---------|-----------------------------|
+| **STR**  | Rot     | Pulsierender Rahmen         |
+| **INT**  | Blau    | Sanfter Glow                |
+| **AGI**  | Grün    | Dynamischer Schatten        |
+| **STM**  | Gelb    | Warmes Leuchten             |
 
-## 🎮 Features im Detail
+### 🗡️ Frostmourne Custom Cursor
+- Design inspiriert vom **Lich King**-Schwert
+- Drehung bei Hover + schwebende Eis-Partikel
+- Umgesetzt mit `useEffect` + Framer Motion Variants
 
-### **⚔️ Character Stats System**
-- **STR (Stärke)**: Rot mit pulsierendem Rahmen
-- **INT (Intelligenz)**: Blau mit sanftem Glow
-- **AGI (Agilität)**: Grün mit dynamischem Schatten
-- **STM (Stamina)**: Gelb mit warmem Leuchten
-
-### **🗡️ Frostmourne Custom Cursor**
-- **Design**: Lich King's Schwert mit Ice-Effekten
-- **Animation**: Drehung bei Hover + schwebende Eis-Partikel
-- **Technik**: `useEffect` für Maus-Tracking + Framer Motion Variants
-
-### **💰 Live Gold System**
+### 💰 Live-Gold-System
 ```tsx
-// Automatische Gold-Generierung alle 3 Sekunden
-- Zufälliger Gewinn (5-50 Gold)
-- Fliegender Text mit Fade-Effekt
-- Animierter Gold-Counter im Footer
-- Transaktions-Historie mit AnimatePresence
+// Automatische Generierung alle 3 Sekunden
+- Zufälliger Gewinn zwischen 5–50 Gold
+- Fliegende Textanimation mit Fade-Out
+- Live-Counter im Footer
+- Animierte Transaktions-Historie
 
 🛠️ Installation & Setup
 Voraussetzungen
 
-    -Node.js 18+
+    - Node.js 18 oder höher
 
-    -npm / yarn / pnpm
+    - npm, yarn oder pnpm
 
-    -Git
+    - Git
 
 Quick Start
 
-# Repository klonen
-git clone https://github.com/JimSchroeter/mein-projekt.git
+# Repository klonen (SSH)
+git clone git@github.com:JimSchroeter/mein-projekt.git
 
 # In Verzeichnis wechseln
-cd jermaine-portfolio
+cd mein-projekt
 
 # Dependencies installieren
 npm install
-# oder
-yarn install
-# oder
-pnpm install
 
 # Development Server starten
 npm run dev
-# oder
-yarn dev
-# oder
-pnpm dev
 
-# Browser öffnen
-# http://localhost:3000
+Öffne http://localhost:3000 im Browser.
 
-Build für Production
-# Production Build erstellen
+Production Build
+# Optimierten Build erstellen
 npm run build
 
 # Production Server starten
 npm run start
 
+📄 Lizenz
+
+Dieses Projekt ist lizenziert unter der MIT-Lizenz.
+Siehe LICENSE für weitere Informationen.
+
+<div align="center">
+
+👾 Gegrinded mit 💙 in Berlin – Level 35 System Engineer 👾
+
+⬆ Zurück nach oben
+</div> ```
