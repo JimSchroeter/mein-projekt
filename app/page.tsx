@@ -21,6 +21,11 @@ interface Bug {
   maxHp: number;
 }
 
+// Interface für Game Over Nachrichten
+interface GameOverMessage {
+  message: string;
+}
+
 export default function Home() {
   const [glitchText, setGlitchText] = useState("> Jermaine S. // System Electronics Engineer");
   const [birthYear] = useState("1989");
@@ -39,6 +44,9 @@ export default function Home() {
   // Game States - TYPING DEFENDER
   const [gameActive, setGameActive] = useState(false);
   const [gameWon, setGameWon] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+  const [gameOverType, setGameOverType] = useState<"mana" | "hp" | null>(null);
+  const [gameOverMessage, setGameOverMessage] = useState("");
   const [bugs, setBugs] = useState<Bug[]>([]);
   const [currentInput, setCurrentInput] = useState("");
   const [gameMessage, setGameMessage] = useState("");
@@ -53,14 +61,28 @@ export default function Home() {
   const [maxCombo, setMaxCombo] = useState(0);
   const [comboPopup, setComboPopup] = useState({ show: false, text: "", x: 0, y: 0 });
   
-  // GLIBITS - Neue Währung
+  // GLIBITS
   const [glibits, setGlibits] = useState(0);
   const [glibitPopup, setGlibitPopup] = useState({ show: false, amount: 0, x: 0, y: 0 });
   
   // Level basierend auf Alter
   const [playerLevel] = useState(36);
   
-  // VERDOPPELTE Bug-Wörter für das Spiel
+  // Game Over Nachrichten (motivierend-passiv-aggressiv)
+  const gameOverMessages: GameOverMessage[] = [
+    { message: "Du hast verloren... streng dich mal an! 💪" },
+    { message: "Nicht dein Tag, was? Versuchs nochmal!" },
+    { message: "Loser! ... aber wir glauben an dich! ✨" },
+    { message: "Autsch. Das war hart. Noch eine Runde?" },
+    { message: "Immerhin hast du's versucht. So halb. 🔄" },
+    { message: "Du kannst das! Wirklich! ... vielleicht." },
+    { message: "Game Over. Aber jeder fängt klein an." },
+    { message: "Nicht schlecht für einen Anfänger. Probier's nochmal!" },
+    { message: "Oops! ... schon wieder vorbei. Nochmal?" },
+    { message: "Du wurdest besser... in diesem Spiel. Nicht." }
+  ];
+  
+  // VERDOPPELTE Bug-Wörter
   const bugWords = [
     "BUG", "ERROR", "404", "CRASH", "HACK", "GLITCH", "FIX", "CODE", 
     "NULL", "UNDEFINED", "SYNTAX", "LOOP", "STACK", "HEAP", "BYTE",
@@ -164,9 +186,23 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [transactionId, isMounted]);
 
+  // Game Over prüfen
+  useEffect(() => {
+    if (gameActive && !gameWon && !gameOver) {
+      // Prüfen auf Mana = 0
+      if (playerMana <= 0) {
+        const randomIndex = Math.floor(Math.random() * gameOverMessages.length);
+        setGameOverMessage(gameOverMessages[randomIndex].message);
+        setGameOverType("mana");
+        setGameOver(true);
+        setGameActive(false);
+      }
+    }
+  }, [playerMana, gameActive, gameWon, gameOver]);
+
   // TYPING DEFENDER GAME LOGIC
   useEffect(() => {
-    if (!gameActive || gameWon) return;
+    if (!gameActive || gameWon || gameOver) return;
 
     const spawnInterval = setInterval(() => {
       const randomWord = bugWords[Math.floor(Math.random() * bugWords.length)];
@@ -187,16 +223,21 @@ export default function Home() {
           ...bug,
           y: bug.y + 0.5,
         })).filter(bug => {
+          // Bug erreicht unteren Screen -> Schaden + Combo-Reset
           if (bug.y > 85) {
             setPlayerHP(hp => {
               const newHp = Math.max(hp - 30, 0);
               if (newHp <= 0) {
-                setGameMessage("💀 GAME OVER! Drücke Reset");
+                // Tod durch HP = 0
+                setGameOverType("hp");
+                setGameOver(true);
                 setGameActive(false);
               }
               return newHp;
             });
             setGameMessage(`❌ Bug entkommen! -30 HP`);
+            // Combo-Reset bei Schaden
+            setCombo(0);
             setTimeout(() => setGameMessage(""), 1500);
             return false;
           }
@@ -209,7 +250,7 @@ export default function Home() {
       clearInterval(spawnInterval);
       clearInterval(moveInterval);
     };
-  }, [gameActive, gameWon, wave]);
+  }, [gameActive, gameWon, gameOver, wave]);
 
   // Combo Popup anzeigen
   const showComboPopup = (comboValue: number, x: number, y: number) => {
@@ -239,21 +280,29 @@ export default function Home() {
     setTimeout(() => setGlibitPopup({ show: false, amount: 0, x: 0, y: 0 }), 1500);
   };
 
-  // Reset Game Funktion
+  // Reset Game Funktion (mit Auto-Start)
   const resetGame = () => {
     setGameActive(false);
     setGameWon(false);
+    setGameOver(false);
+    setGameOverType(null);
     setBugs([]);
     setWave(1);
     setScore(0);
     setBugsKilled(0);
     setCombo(0);
-    setGlibits(0); // Glibits auf 0
-    setPlayerHP(8923); // HP voll
-    setPlayerMana(280); // Mana halb voll
+    setGlibits(0);
+    setPlayerHP(8923);
+    setPlayerMana(280);
     setCurrentInput("");
     setGameMessage("🔄 GAME RESET");
-    setTimeout(() => setGameMessage(""), 2000);
+    
+    // Kurz warten und dann automatisch starten
+    setTimeout(() => {
+      setGameActive(true);
+      setGameMessage("🎮 LOS GEHT'S!");
+      setTimeout(() => setGameMessage(""), 2000);
+    }, 500);
   };
 
   // Tipp-Eingabe verarbeiten
@@ -270,7 +319,7 @@ export default function Home() {
         // Alte Combo für Berechnung merken
         const oldCombo = combo;
         
-        // Combo erhöhen
+        // Combo erhöhen (nur bei erfolgreichem Kill)
         const newCombo = combo + 1;
         setCombo(newCombo);
         if (newCombo > maxCombo) setMaxCombo(newCombo);
@@ -278,7 +327,7 @@ export default function Home() {
         // GLIBITS berechnen: (Combo - 1) Glibits, mindestens 1 bei x2 Combo
         let glibitReward = 0;
         if (newCombo >= 2) {
-          glibitReward = newCombo - 1; // x2=1, x3=2, x4=3, x5=4, usw.
+          glibitReward = newCombo - 1;
           setGlibits(prev => {
             const newGlibits = prev + glibitReward;
             
@@ -292,7 +341,6 @@ export default function Home() {
             
             return newGlibits;
           });
-          // Glibit Popup anzeigen
           showGlibitPopup(glibitReward, bug.x, bug.y);
         }
         
@@ -305,7 +353,7 @@ export default function Home() {
         setScore(prev => prev + 100 + (newCombo * 10));
         setBugsKilled(prev => prev + 1);
         
-        // Combo Popup anzeigen (nur wenn Combo gestiegen)
+        // Combo Popup anzeigen (nur wenn Combo gestiegen und >1)
         if (newCombo > 1) {
           showComboPopup(newCombo, bug.x, bug.y - 5);
         }
@@ -320,15 +368,14 @@ export default function Home() {
         setCurrentInput("");
       } else {
         setGameMessage("❌ Nicht genug MANA!");
-        // Combo zurücksetzen bei Mana-Mangel
-        setCombo(0);
+        // KEIN Combo-Reset bei Mana-Mangel
       }
       
       setTimeout(() => setGameMessage(""), 1500);
     } else if (value.length > 0) {
       // Falsche Eingabe - Combo zurücksetzen (Combo x0)
       setCombo(0);
-      setGameMessage("❌ Combo reset!");
+      setGameMessage("❌ Falsch! Combo reset!");
       setTimeout(() => setGameMessage(""), 800);
     }
   };
@@ -342,7 +389,7 @@ export default function Home() {
 
   // Spiel starten/stoppen
   const toggleGame = () => {
-    if (!gameActive && !gameWon) {
+    if (!gameActive && !gameWon && !gameOver) {
       setGameActive(true);
       setBugs([]);
       setWave(1);
@@ -385,6 +432,80 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen font-gaming overflow-hidden" style={{ cursor: 'none' }}>
+      {/* Game Over Popup - Mana Version */}
+      <AnimatePresence>
+        {gameOver && gameOverType === "mana" && (
+          <motion.div
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-gradient-to-b from-purple-900 to-black border-2 border-red-500 rounded-2xl p-8 max-w-md text-center space-y-6"
+              initial={{ scale: 0.8, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ type: "spring", damping: 15 }}
+            >
+              <h2 className="text-3xl font-bold text-red-500">GAME OVER</h2>
+              <div className="w-20 h-20 mx-auto bg-purple-800/50 rounded-full flex items-center justify-center">
+                <span className="text-4xl">😵</span>
+              </div>
+              <div className="text-cyan-300 text-lg">MANA LEER!</div>
+              <div className="text-cyan-400/80 text-sm">{gameOverMessage}</div>
+              
+              <button
+                onClick={resetGame}
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-cyan-600 rounded-lg text-white font-bold hover:scale-105 transition-all"
+              >
+                🔄 NOCHMAL VERSUCHEN
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Game Over Popup - HP Version (Grabstein) */}
+      <AnimatePresence>
+        {gameOver && gameOverType === "hp" && (
+          <motion.div
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-gradient-to-b from-gray-800 to-black border-2 border-gray-600 rounded-2xl p-8 max-w-md text-center space-y-6"
+              initial={{ scale: 0.8, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ type: "spring", damping: 15 }}
+            >
+              <h2 className="text-3xl font-bold text-gray-400">R.I.P.</h2>
+              <div className="relative w-24 h-32 mx-auto">
+                {/* Grabstein */}
+                <div className="absolute bottom-0 w-24 h-20 bg-gray-700 rounded-t-lg"></div>
+                <div className="absolute bottom-20 w-20 h-12 bg-gray-600 rounded-t-lg left-2"></div>
+                <div className="absolute bottom-16 w-16 h-24 bg-gray-500 rounded-t-lg left-4 flex items-center justify-center">
+                  <span className="text-red-500 font-bold text-xl transform -rotate-90">LOSER</span>
+                </div>
+                {/* Kreuz */}
+                <div className="absolute top-0 left-10 w-2 h-10 bg-gray-400"></div>
+                <div className="absolute top-2 left-6 w-10 h-2 bg-gray-400"></div>
+              </div>
+              <div className="text-red-400 text-lg">DU BIST GESTORBEN!</div>
+              <div className="text-gray-400 text-sm">Immerhin hast du {bugsKilled} Bugs gekillt...</div>
+              
+              <button
+                onClick={resetGame}
+                className="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-800 rounded-lg text-white font-bold hover:scale-105 transition-all"
+              >
+                🪦 WIEDERBELEBEN
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Combo Popup */}
       <AnimatePresence>
         {comboPopup.show && (
@@ -426,22 +547,30 @@ export default function Home() {
             exit={{ scale: 0, opacity: 0 }}
             transition={{ duration: 1 }}
           >
-            {/* Glibit Cube Icon mit Glitch Effekt */}
+            {/* Glitchiger Glibit Cube */}
             <motion.div
               className="w-6 h-6 relative"
               animate={{
-                scale: [1, 1.2, 0.8, 1.1, 1],
-                rotate: [0, 10, -10, 5, 0],
-                skewX: [0, 5, -5, 3, 0],
-                skewY: [0, 3, -3, 2, 0]
+                scale: [1, 1.3, 0.7, 1.2, 0.9, 1],
+                rotate: [0, 15, -20, 25, -15, 0],
+                skewX: [0, 10, -15, 12, -8, 0],
+                skewY: [0, 8, -12, 10, -6, 0],
+                filter: [
+                  'hue-rotate(0deg) brightness(1)',
+                  'hue-rotate(90deg) brightness(1.5)',
+                  'hue-rotate(180deg) brightness(0.8)',
+                  'hue-rotate(270deg) brightness(1.3)',
+                  'hue-rotate(360deg) brightness(1)',
+                ]
               }}
-              transition={{ duration: 2, repeat: Infinity }}
+              transition={{ duration: 1.5, repeat: Infinity }}
             >
               <div className="absolute inset-0 bg-cyan-400 clip-cube"></div>
               <div className="absolute inset-0 bg-pink-400 clip-cube opacity-70 animate-pulse"></div>
-              <div className="absolute inset-0 bg-white clip-cube opacity-30 blur-sm"></div>
+              <div className="absolute inset-0 bg-yellow-400 clip-cube opacity-40" style={{ mixBlendMode: 'screen' }}></div>
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-pink-400 clip-cube blur-md opacity-50"></div>
             </motion.div>
-            <span className="text-cyan-300 font-bold text-lg">+{glibitPopup.amount}</span>
+            <span className="text-cyan-300 font-bold text-lg animate-pulse">+{glibitPopup.amount}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -579,30 +708,62 @@ export default function Home() {
           onHoverStart={() => setCursorVariant("hover")}
           onHoverEnd={() => setCursorVariant("default")}
         >
-          {/* Header mit MARIO BROS THEME */}
+          {/* SUPER MARIO BROS NAME */}
           <div className="text-center space-y-2">
             <div className="relative inline-block">
               <h1 className="text-5xl sm:text-6xl font-bold relative z-10">
-                <span className="mario-text">JERMAINE S.</span>
+                <span className="mario-name">
+                  <span className="mario-block">J</span>
+                  <span className="mario-block">E</span>
+                  <span className="mario-block">R</span>
+                  <span className="mario-block">M</span>
+                  <span className="mario-block">A</span>
+                  <span className="mario-block">I</span>
+                  <span className="mario-block">N</span>
+                  <span className="mario-block">E</span>
+                  <span className="mario-space"> </span>
+                  <span className="mario-block">S</span>
+                  <span className="mario-dot">.</span>
+                </span>
               </h1>
-              <div className="absolute -top-4 -left-6 w-8 h-8">
-                <div className="w-6 h-6 bg-red-500 rounded-full border-4 border-brown-700 shadow-lg animate-bounce" style={{ animationDuration: '2s' }}>
+              
+              {/* Mario Dekorationen */}
+              <div className="absolute -top-8 -left-10 w-12 h-12 animate-bounce" style={{ animationDuration: '2s' }}>
+                <div className="w-10 h-10 bg-red-500 rounded-full border-4 border-brown-700 shadow-lg relative">
+                  <div className="absolute top-2 left-2 w-2 h-2 bg-white rounded-full"></div>
+                  <div className="absolute top-2 right-2 w-2 h-2 bg-white rounded-full"></div>
+                  <div className="absolute bottom-2 left-3 w-4 h-2 bg-brown-700 rounded-full"></div>
+                </div>
+              </div>
+
+              <div className="absolute -bottom-4 right-0 flex gap-1">
+                <div className="w-4 h-4 bg-yellow-400 rounded-sm shadow-md animate-pulse"></div>
+                <div className="w-4 h-4 bg-yellow-400 rounded-sm shadow-md animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-4 h-4 bg-yellow-400 rounded-sm shadow-md animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+
+              <div className="absolute top-0 -right-8 w-8 h-8">
+                <div className="w-6 h-5 bg-red-600 rounded-t-lg mx-auto relative">
                   <div className="w-2 h-2 bg-white rounded-full absolute top-1 left-1"></div>
                   <div className="w-2 h-2 bg-white rounded-full absolute top-1 right-1"></div>
                 </div>
+                <div className="w-7 h-4 bg-orange-400 rounded-b-lg mx-auto"></div>
               </div>
-              <div className="absolute -bottom-4 right-0 w-10 h-6">
-                <div className="w-3 h-3 bg-yellow-400 rounded-sm inline-block mx-0.5 shadow-md"></div>
-                <div className="w-3 h-3 bg-yellow-400 rounded-sm inline-block mx-0.5 shadow-md"></div>
-                <div className="w-3 h-3 bg-yellow-400 rounded-sm inline-block mx-0.5 shadow-md"></div>
+
+              <div className="absolute -bottom-2 -left-8 w-16 h-8">
+                <div className="w-4 h-6 bg-green-700 rounded-t-lg inline-block mx-0.5"></div>
+                <div className="w-4 h-8 bg-green-700 rounded-t-lg inline-block mx-0.5"></div>
+                <div className="w-4 h-5 bg-green-700 rounded-t-lg inline-block mx-0.5"></div>
+                <div className="w-4 h-7 bg-green-700 rounded-t-lg inline-block mx-0.5"></div>
               </div>
-              <div className="absolute -top-2 right-0 w-6 h-6">
-                <div className="w-4 h-3 bg-red-600 rounded-t-lg mx-auto"></div>
-                <div className="w-5 h-3 bg-orange-400 rounded-b-lg mx-auto"></div>
-                <div className="w-1 h-2 bg-white absolute top-1 left-1"></div>
+
+              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-12 h-6">
+                <div className="w-10 h-4 bg-blue-300 rounded-full opacity-70 blur-sm"></div>
+                <div className="w-8 h-3 bg-white rounded-full absolute top-1 left-2 opacity-50"></div>
               </div>
             </div>
-            <div className="flex justify-center gap-2 text-lg text-cyan-300">
+            
+            <div className="flex justify-center gap-2 text-lg text-cyan-300 mt-4">
               <span className="animate-pulse">⚔️</span>
               <span>LEVEL {playerLevel} SYSTEM ENGINEER</span>
               <span className="animate-pulse">⚔️</span>
@@ -644,7 +805,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Character Bio mit HACKER-FILM GLITCH + ZUCKEN */}
+          {/* Character Bio */}
           <div className="space-y-3 text-cyan-300/80 border-l-4 border-cyan-500 pl-4 bg-black/30 p-4 rounded-r-lg">
             <p className="flex items-center gap-2">
               <span className="text-yellow-400">🏰</span> Location: {location}
@@ -711,13 +872,22 @@ export default function Home() {
                 <motion.div
                   className="w-5 h-5 relative"
                   animate={{
-                    scale: [1, 1.1, 0.9, 1.05, 1],
-                    rotate: [0, 5, -5, 3, 0],
+                    scale: [1, 1.2, 0.8, 1.1, 0.9, 1],
+                    rotate: [0, 10, -15, 12, -8, 0],
+                    skewX: [0, 5, -8, 6, -4, 0],
+                    filter: [
+                      'hue-rotate(0deg)',
+                      'hue-rotate(45deg)',
+                      'hue-rotate(90deg)',
+                      'hue-rotate(45deg)',
+                      'hue-rotate(0deg)',
+                    ]
                   }}
-                  transition={{ duration: 3, repeat: Infinity }}
+                  transition={{ duration: 2, repeat: Infinity }}
                 >
                   <div className="absolute inset-0 bg-cyan-400 clip-cube"></div>
                   <div className="absolute inset-0 bg-pink-400 clip-cube opacity-60 animate-pulse"></div>
+                  <div className="absolute inset-0 bg-purple-400 clip-cube opacity-40 mix-blend-screen"></div>
                 </motion.div>
                 <span className="text-cyan-300 font-bold text-sm">{glibits}</span>
               </div>
@@ -785,9 +955,9 @@ export default function Home() {
                   onMouseEnter={() => setCursorVariant("hover")}
                   onMouseLeave={() => setCursorVariant("default")}
                   className="bg-black/50 border border-cyan-500/50 rounded-lg px-4 py-2 text-sm text-cyan-300 hover:bg-cyan-900/30 transition-all"
-                  disabled={gameWon}
+                  disabled={gameWon || gameOver}
                 >
-                  {gameActive ? '⏸️ PAUSE' : gameWon ? '🏆 GEWONNEN' : '▶️ START'}
+                  {gameActive ? '⏸️ PAUSE' : gameWon ? '🏆 GEWONNEN' : gameOver ? '💀 GAME OVER' : '▶️ START'}
                 </button>
               </div>
             </div>
@@ -800,7 +970,7 @@ export default function Home() {
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder={gameActive ? "Tippe das Wort..." : "Spiel starten..."}
-                disabled={!gameActive || gameWon}
+                disabled={!gameActive || gameWon || gameOver}
                 className="flex-1 bg-black/50 border border-cyan-500/50 rounded-lg px-4 py-2 text-cyan-300 placeholder-cyan-700 focus:outline-none focus:border-cyan-400 uppercase"
                 autoComplete="off"
                 spellCheck="false"
@@ -964,24 +1134,94 @@ export default function Home() {
           clip-path: polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%);
         }
 
-        /* MARIO BROS TEXT STYLE */
-        .mario-text {
-          background: linear-gradient(135deg, #f1c40f 0%, #e67e22 50%, #f1c40f 100%);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-          text-shadow: 
-            4px 4px 0 #c0392b,
-            2px 2px 0 #2980b9,
-            0 0 10px rgba(241, 196, 15, 0.5);
-          font-weight: 900;
-          letter-spacing: 2px;
-          animation: mario-float 3s ease-in-out infinite;
+        /* SUPER MARIO BROS NAME */
+        .mario-name {
+          display: inline-flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 2px;
         }
 
-        @keyframes mario-float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-5px); }
+        .mario-block {
+          display: inline-block;
+          width: 50px;
+          height: 60px;
+          background: linear-gradient(135deg, #e67e22 0%, #f1c40f 50%, #e67e22 100%);
+          border: 3px solid #8B4513;
+          border-radius: 8px 8px 4px 4px;
+          box-shadow: 
+            0 4px 0 #654321,
+            0 6px 0 #3d2b1a,
+            inset 0 -2px 0 #f39c12,
+            inset 0 2px 0 #f9e79f;
+          text-align: center;
+          line-height: 60px;
+          font-size: 32px;
+          font-weight: 900;
+          color: #fff;
+          text-shadow: 
+            3px 3px 0 #c0392b,
+            1px 1px 0 #2980b9,
+            0 0 10px rgba(241, 196, 15, 0.8);
+          margin: 0 2px;
+          transform: rotate(1deg);
+          animation: block-bounce 2s infinite;
+        }
+
+        .mario-block:nth-child(even) {
+          transform: rotate(-1deg);
+          background: linear-gradient(135deg, #f1c40f 0%, #e67e22 50%, #f1c40f 100%);
+          animation: block-bounce 2s infinite 0.2s;
+        }
+
+        .mario-block:nth-child(3n) {
+          background: linear-gradient(135deg, #27ae60 0%, #2ecc71 50%, #27ae60 100%);
+          border-color: #1e5f3e;
+          animation: block-bounce 2s infinite 0.4s;
+        }
+
+        .mario-block:nth-child(5n) {
+          background: linear-gradient(135deg, #2980b9 0%, #3498db 50%, #2980b9 100%);
+          border-color: #1a5276;
+          animation: block-bounce 2s infinite 0.1s;
+        }
+
+        .mario-space {
+          width: 20px;
+        }
+
+        .mario-dot {
+          display: inline-block;
+          width: 50px;
+          height: 60px;
+          background: linear-gradient(135deg, #f1c40f 0%, #e67e22 50%, #f1c40f 100%);
+          border: 3px solid #8B4513;
+          border-radius: 8px 8px 4px 4px;
+          box-shadow: 
+            0 4px 0 #654321,
+            0 6px 0 #3d2b1a,
+            inset 0 -2px 0 #f39c12,
+            inset 0 2px 0 #f9e79f;
+          text-align: center;
+          line-height: 60px;
+          font-size: 32px;
+          font-weight: 900;
+          color: #fff;
+          margin: 0 2px;
+        }
+
+        @keyframes block-bounce {
+          0%, 100% { transform: translateY(0) rotate(1deg); }
+          50% { transform: translateY(-5px) rotate(1deg); }
+        }
+
+        .mario-block:nth-child(even) {
+          animation: block-bounce-even 2s infinite 0.2s;
+        }
+
+        @keyframes block-bounce-even {
+          0%, 100% { transform: translateY(0) rotate(-1deg); }
+          50% { transform: translateY(-5px) rotate(-1deg); }
         }
 
         /* HACKER-FILM GLITCH + ZUCKEN */
