@@ -104,7 +104,7 @@ Voraussetzungen
 Quick Start
 
 # Repository klonen
-git clone https://github.com/JimSchroeter/jermaine-portfolio.git
+git clone https://github.com/JimSchroeter/mein-projekt.git
 
 # In Verzeichnis wechseln
 cd jermaine-portfolio
