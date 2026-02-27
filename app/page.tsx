@@ -38,6 +38,7 @@ export default function Home() {
   
   // Game States - TYPING DEFENDER
   const [gameActive, setGameActive] = useState(false);
+  const [gameWon, setGameWon] = useState(false);
   const [bugs, setBugs] = useState<Bug[]>([]);
   const [currentInput, setCurrentInput] = useState("");
   const [gameMessage, setGameMessage] = useState("");
@@ -46,17 +47,33 @@ export default function Home() {
   const [wave, setWave] = useState(1);
   const [score, setScore] = useState(0);
   const [bugsKilled, setBugsKilled] = useState(0);
-  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+  
+  // COMBO MECHANIK
+  const [combo, setCombo] = useState(0);
+  const [maxCombo, setMaxCombo] = useState(0);
+  const [comboPopup, setComboPopup] = useState({ show: false, text: "", x: 0, y: 0 });
+  
+  // GLIBITS - Neue Währung
+  const [glibits, setGlibits] = useState(0);
+  const [glibitPopup, setGlibitPopup] = useState({ show: false, amount: 0, x: 0, y: 0 });
   
   // Level basierend auf Alter
   const [playerLevel] = useState(36);
   
-  // Bug-Wörter für das Spiel
+  // VERDOPPELTE Bug-Wörter für das Spiel
   const bugWords = [
     "BUG", "ERROR", "404", "CRASH", "HACK", "GLITCH", "FIX", "CODE", 
     "NULL", "UNDEFINED", "SYNTAX", "LOOP", "STACK", "HEAP", "BYTE",
     "CONSOLE", "LOG", "FUNCTION", "RETURN", "IMPORT", "EXPORT", 
-    "CONST", "LET", "VAR", "IF", "ELSE", "FOR", "WHILE", "BREAK"
+    "CONST", "LET", "VAR", "IF", "ELSE", "FOR", "WHILE", "BREAK",
+    "CONTINUE", "SWITCH", "CASE", "DEFAULT", "TRY", "CATCH", "FINALLY",
+    "THROW", "CLASS", "EXTENDS", "SUPER", "CONSTRUCTOR", "TYPEOF",
+    "INSTANCEOF", "DELETE", "AWAIT", "ASYNC", "YIELD", "STATIC",
+    "GET", "SET", "ENUM", "IMPLEMENTS", "INTERFACE", "PACKAGE",
+    "PRIVATE", "PROTECTED", "PUBLIC", "READONLY", "ABSTRACT",
+    "ARRAY", "STRING", "NUMBER", "BOOLEAN", "OBJECT", "SYMBOL",
+    "PUSH", "POP", "SHIFT", "UNSHIFT", "SPLICE", "SLICE", "CONCAT",
+    "JOIN", "INDEXOF", "INCLUDES", "FIND", "FILTER", "MAP", "REDUCE"
   ];
   
   // Floating particles
@@ -104,10 +121,9 @@ export default function Home() {
     };
   }, [isMounted]);
 
-  // Klick Handler für Strike Animation - AN DER SCHWERTSPITZE
+  // Klick Handler für Strike Animation
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      // Schwertspitze ist bei 45° Rotation etwa 20px nach rechts-oben versetzt
       const swordTipX = mousePosition.x + 15;
       const swordTipY = mousePosition.y - 15;
       setStrikePosition({ x: swordTipX, y: swordTipY });
@@ -150,15 +166,14 @@ export default function Home() {
 
   // TYPING DEFENDER GAME LOGIC
   useEffect(() => {
-    if (!gameActive) return;
+    if (!gameActive || gameWon) return;
 
-    // Bug-Spawn-Intervall - BEGRENZTER SICHTBARER BEREICH
     const spawnInterval = setInterval(() => {
       const randomWord = bugWords[Math.floor(Math.random() * bugWords.length)];
       const newBug: Bug = {
         id: Date.now() + Math.random(),
-        x: Math.random() * 70 + 15, // 15% bis 85% (besser sichtbar)
-        y: Math.random() * 40 + 5,   // 5% bis 45% (nie außerhalb)
+        x: Math.random() * 70 + 15,
+        y: Math.random() * 40 + 5,
         text: randomWord,
         hp: randomWord.length * 10,
         maxHp: randomWord.length * 10,
@@ -166,16 +181,21 @@ export default function Home() {
       setBugs(prev => [...prev, newBug]);
     }, 2000 / wave);
 
-    // Bug-Bewegung (nach unten kriechen) - MIT BEGRENZUNG
     const moveInterval = setInterval(() => {
       setBugs(prev => 
         prev.map(bug => ({
           ...bug,
           y: bug.y + 0.5,
         })).filter(bug => {
-          // Bei 85% verschwinden und Schaden verursachen (nie unsichtbar)
           if (bug.y > 85) {
-            setPlayerHP(hp => Math.max(hp - 30, 0));
+            setPlayerHP(hp => {
+              const newHp = Math.max(hp - 30, 0);
+              if (newHp <= 0) {
+                setGameMessage("💀 GAME OVER! Drücke Reset");
+                setGameActive(false);
+              }
+              return newHp;
+            });
             setGameMessage(`❌ Bug entkommen! -30 HP`);
             setTimeout(() => setGameMessage(""), 1500);
             return false;
@@ -189,28 +209,108 @@ export default function Home() {
       clearInterval(spawnInterval);
       clearInterval(moveInterval);
     };
-  }, [gameActive, wave]);
+  }, [gameActive, gameWon, wave]);
 
-  // Tipp-Eingabe verarbeiten - GEFIXT (kein automatisches Löschen)
+  // Combo Popup anzeigen
+  const showComboPopup = (comboValue: number, x: number, y: number) => {
+    let text = "";
+    let color = "text-yellow-400";
+    
+    if (comboValue >= 10) {
+      text = "🔥 COMBO X" + comboValue + "!";
+      color = "text-red-500";
+    } else if (comboValue >= 5) {
+      text = "⚡ COMBO X" + comboValue + "!";
+      color = "text-orange-400";
+    } else if (comboValue >= 2) {
+      text = "✨ COMBO X" + comboValue + "!";
+      color = "text-yellow-400";
+    }
+    
+    if (text) {
+      setComboPopup({ show: true, text, x, y });
+      setTimeout(() => setComboPopup({ show: false, text: "", x: 0, y: 0 }), 1500);
+    }
+  };
+
+  // Glibit Popup anzeigen
+  const showGlibitPopup = (amount: number, x: number, y: number) => {
+    setGlibitPopup({ show: true, amount, x, y });
+    setTimeout(() => setGlibitPopup({ show: false, amount: 0, x: 0, y: 0 }), 1500);
+  };
+
+  // Reset Game Funktion
+  const resetGame = () => {
+    setGameActive(false);
+    setGameWon(false);
+    setBugs([]);
+    setWave(1);
+    setScore(0);
+    setBugsKilled(0);
+    setCombo(0);
+    setGlibits(0); // Glibits auf 0
+    setPlayerHP(8923); // HP voll
+    setPlayerMana(280); // Mana halb voll
+    setCurrentInput("");
+    setGameMessage("🔄 GAME RESET");
+    setTimeout(() => setGameMessage(""), 2000);
+  };
+
+  // Tipp-Eingabe verarbeiten
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toUpperCase();
     setCurrentInput(value);
 
-    // Prüfen ob ein Bug getroffen wurde
     const matchedBugIndex = bugs.findIndex(bug => bug.text === value);
     
     if (matchedBugIndex !== -1) {
-      // Bug getroffen!
       const bug = bugs[matchedBugIndex];
       
       if (playerMana >= 15) {
-        setPlayerMana(prev => prev - 15);
+        // Alte Combo für Berechnung merken
+        const oldCombo = combo;
         
+        // Combo erhöhen
+        const newCombo = combo + 1;
+        setCombo(newCombo);
+        if (newCombo > maxCombo) setMaxCombo(newCombo);
+        
+        // GLIBITS berechnen: (Combo - 1) Glibits, mindestens 1 bei x2 Combo
+        let glibitReward = 0;
+        if (newCombo >= 2) {
+          glibitReward = newCombo - 1; // x2=1, x3=2, x4=3, x5=4, usw.
+          setGlibits(prev => {
+            const newGlibits = prev + glibitReward;
+            
+            // WIN-BEDINGUNG: 100 Glibits erreicht
+            if (newGlibits >= 100 && !gameWon) {
+              setGameWon(true);
+              setGameActive(false);
+              setGameMessage("🏆 DU HAST GEWONNEN! 100 GLIBITS! 🏆");
+              setTimeout(() => setGameMessage(""), 3000);
+            }
+            
+            return newGlibits;
+          });
+          // Glibit Popup anzeigen
+          showGlibitPopup(glibitReward, bug.x, bug.y);
+        }
+        
+        // Mana-Berechnung: Basis 5 + Combo-Bonus
+        const manaBonus = 5 + (newCombo >= 10 ? 30 : newCombo >= 5 ? 20 : newCombo >= 3 ? 10 : 5);
+        
+        setPlayerMana(prev => prev - 15 + manaBonus);
         setBugs(prev => prev.filter((_, i) => i !== matchedBugIndex));
-        setGold(prev => prev + 50);
-        setScore(prev => prev + 100);
+        setGold(prev => prev + 50 + (newCombo * 5));
+        setScore(prev => prev + 100 + (newCombo * 10));
         setBugsKilled(prev => prev + 1);
-        setGameMessage(`✅ +50 Gold!`);
+        
+        // Combo Popup anzeigen (nur wenn Combo gestiegen)
+        if (newCombo > 1) {
+          showComboPopup(newCombo, bug.x, bug.y - 5);
+        }
+        
+        setGameMessage(`✅ +50 Gold! Combo x${newCombo}`);
         
         if (Math.random() > 0.7) {
           setWave(prev => prev + 1);
@@ -220,12 +320,17 @@ export default function Home() {
         setCurrentInput("");
       } else {
         setGameMessage("❌ Nicht genug MANA!");
-        // Bei Mana-Mangel NICHT das Feld leeren, nur Nachricht zeigen
+        // Combo zurücksetzen bei Mana-Mangel
+        setCombo(0);
       }
       
       setTimeout(() => setGameMessage(""), 1500);
+    } else if (value.length > 0) {
+      // Falsche Eingabe - Combo zurücksetzen (Combo x0)
+      setCombo(0);
+      setGameMessage("❌ Combo reset!");
+      setTimeout(() => setGameMessage(""), 800);
     }
-    // KEIN automatisches Löschen bei falscher Eingabe mehr!
   };
 
   // Backspace Handler
@@ -237,34 +342,35 @@ export default function Home() {
 
   // Spiel starten/stoppen
   const toggleGame = () => {
-    if (!gameActive) {
+    if (!gameActive && !gameWon) {
       setGameActive(true);
       setBugs([]);
       setWave(1);
       setScore(0);
       setBugsKilled(0);
+      setCombo(0);
       setGameMessage("🎮 SPIEL GESTARTET! Tippe die Wörter!");
-    } else {
+    } else if (gameActive) {
       setGameActive(false);
       setGameMessage("⏸️ Spiel pausiert");
     }
     setTimeout(() => setGameMessage(""), 2000);
   };
 
-  // Cursor Variants - 45 GRAD GEDREHT
+  // Cursor Variants
   const cursorVariants = {
     default: {
       x: mousePosition.x - 16,
       y: mousePosition.y - 16,
-      rotate: 45, // 45 Grad gedreht
-      scale: 1.2, // 20% größer
+      rotate: 45,
+      scale: 1.2,
       transition: { type: "spring", stiffness: 300, damping: 30 }
     },
     hover: {
       x: mousePosition.x - 16,
       y: mousePosition.y - 16,
       rotate: 45,
-      scale: 1.4, // Hover auch größer
+      scale: 1.4,
       transition: { type: "spring", stiffness: 300, damping: 30 }
     }
   };
@@ -279,7 +385,68 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen font-gaming overflow-hidden" style={{ cursor: 'none' }}>
-      {/* Strike Animation - AN DER SCHWERTSPITZE */}
+      {/* Combo Popup */}
+      <AnimatePresence>
+        {comboPopup.show && (
+          <motion.div
+            className="fixed z-[70] text-xl font-bold whitespace-nowrap"
+            style={{
+              left: `${comboPopup.x}%`,
+              top: `${comboPopup.y}%`,
+              transform: 'translate(-50%, -50%)'
+            }}
+            initial={{ scale: 0, opacity: 0, y: 0 }}
+            animate={{ scale: 2, opacity: 1, y: -50 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ duration: 1 }}
+          >
+            <span className={`
+              ${comboPopup.text.includes('🔥') ? 'text-red-500' : 
+                comboPopup.text.includes('⚡') ? 'text-orange-400' : 
+                'text-yellow-400'} font-bold drop-shadow-[0_0_10px_rgba(255,255,0,0.5)]
+            `}>
+              {comboPopup.text}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Glibit Popup */}
+      <AnimatePresence>
+        {glibitPopup.show && (
+          <motion.div
+            className="fixed z-[70] flex items-center gap-2"
+            style={{
+              left: `${glibitPopup.x}%`,
+              top: `${glibitPopup.y}%`,
+              transform: 'translate(-50%, -50%)'
+            }}
+            initial={{ scale: 0, opacity: 0, x: 0 }}
+            animate={{ scale: 2, opacity: 1, x: 30 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ duration: 1 }}
+          >
+            {/* Glibit Cube Icon mit Glitch Effekt */}
+            <motion.div
+              className="w-6 h-6 relative"
+              animate={{
+                scale: [1, 1.2, 0.8, 1.1, 1],
+                rotate: [0, 10, -10, 5, 0],
+                skewX: [0, 5, -5, 3, 0],
+                skewY: [0, 3, -3, 2, 0]
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <div className="absolute inset-0 bg-cyan-400 clip-cube"></div>
+              <div className="absolute inset-0 bg-pink-400 clip-cube opacity-70 animate-pulse"></div>
+              <div className="absolute inset-0 bg-white clip-cube opacity-30 blur-sm"></div>
+            </motion.div>
+            <span className="text-cyan-300 font-bold text-lg">+{glibitPopup.amount}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Strike Animation */}
       <AnimatePresence>
         {isStriking && (
           <motion.div
@@ -338,13 +505,13 @@ export default function Home() {
         ))}
       </AnimatePresence>
 
-      {/* Custom Frostmourne Cursor - 45° GEDREHT und 20% GRÖSSER */}
+      {/* Custom Frostmourne Cursor */}
       <motion.div
         className="fixed pointer-events-none z-50"
         variants={cursorVariants}
         animate={cursorVariant}
       >
-        <div className="relative w-10 h-10"> {/* Größe angepasst */}
+        <div className="relative w-10 h-10">
           <svg viewBox="0 0 100 100" className="w-full h-full">
             <path
               d="M50 10 L60 40 L55 45 L52 60 L48 60 L45 45 L40 40 L50 10"
@@ -412,11 +579,29 @@ export default function Home() {
           onHoverStart={() => setCursorVariant("hover")}
           onHoverEnd={() => setCursorVariant("default")}
         >
-          {/* Header */}
+          {/* Header mit MARIO BROS THEME */}
           <div className="text-center space-y-2">
-            <h1 className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 text-transparent bg-clip-text">
-              JERMAINE S.
-            </h1>
+            <div className="relative inline-block">
+              <h1 className="text-5xl sm:text-6xl font-bold relative z-10">
+                <span className="mario-text">JERMAINE S.</span>
+              </h1>
+              <div className="absolute -top-4 -left-6 w-8 h-8">
+                <div className="w-6 h-6 bg-red-500 rounded-full border-4 border-brown-700 shadow-lg animate-bounce" style={{ animationDuration: '2s' }}>
+                  <div className="w-2 h-2 bg-white rounded-full absolute top-1 left-1"></div>
+                  <div className="w-2 h-2 bg-white rounded-full absolute top-1 right-1"></div>
+                </div>
+              </div>
+              <div className="absolute -bottom-4 right-0 w-10 h-6">
+                <div className="w-3 h-3 bg-yellow-400 rounded-sm inline-block mx-0.5 shadow-md"></div>
+                <div className="w-3 h-3 bg-yellow-400 rounded-sm inline-block mx-0.5 shadow-md"></div>
+                <div className="w-3 h-3 bg-yellow-400 rounded-sm inline-block mx-0.5 shadow-md"></div>
+              </div>
+              <div className="absolute -top-2 right-0 w-6 h-6">
+                <div className="w-4 h-3 bg-red-600 rounded-t-lg mx-auto"></div>
+                <div className="w-5 h-3 bg-orange-400 rounded-b-lg mx-auto"></div>
+                <div className="w-1 h-2 bg-white absolute top-1 left-1"></div>
+              </div>
+            </div>
             <div className="flex justify-center gap-2 text-lg text-cyan-300">
               <span className="animate-pulse">⚔️</span>
               <span>LEVEL {playerLevel} SYSTEM ENGINEER</span>
@@ -459,7 +644,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Character Bio mit HACKER-FILM GLITCH EFFEKT */}
+          {/* Character Bio mit HACKER-FILM GLITCH + ZUCKEN */}
           <div className="space-y-3 text-cyan-300/80 border-l-4 border-cyan-500 pl-4 bg-black/30 p-4 rounded-r-lg">
             <p className="flex items-center gap-2">
               <span className="text-yellow-400">🏰</span> Location: {location}
@@ -507,6 +692,9 @@ export default function Home() {
                 <span className="text-xs bg-black/50 px-2 py-1 rounded text-cyan-400">WAVE {wave}</span>
                 <span className="text-xs bg-black/50 px-2 py-1 rounded text-yellow-400">SCORE {score}</span>
                 <span className="text-xs bg-black/50 px-2 py-1 rounded text-green-400">KILLS {bugsKilled}</span>
+                {combo > 1 && (
+                  <span className="text-xs bg-black/50 px-2 py-1 rounded text-orange-400">COMBO x{combo}</span>
+                )}
               </div>
             </div>
 
@@ -518,6 +706,39 @@ export default function Home() {
 
             {/* Game Area */}
             <div className="relative h-64 bg-black/60 rounded-lg border border-cyan-500/30 overflow-hidden mb-4">
+              {/* GLIBITS Anzeige unten links */}
+              <div className="absolute bottom-2 left-2 z-20 flex items-center gap-2 bg-black/70 px-3 py-1.5 rounded-lg border border-cyan-500/30">
+                <motion.div
+                  className="w-5 h-5 relative"
+                  animate={{
+                    scale: [1, 1.1, 0.9, 1.05, 1],
+                    rotate: [0, 5, -5, 3, 0],
+                  }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >
+                  <div className="absolute inset-0 bg-cyan-400 clip-cube"></div>
+                  <div className="absolute inset-0 bg-pink-400 clip-cube opacity-60 animate-pulse"></div>
+                </motion.div>
+                <span className="text-cyan-300 font-bold text-sm">{glibits}</span>
+              </div>
+
+              {/* Win Message */}
+              {gameWon && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                  <div className="text-center">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="text-4xl mb-2"
+                    >
+                      🏆
+                    </motion.div>
+                    <div className="text-yellow-400 font-bold text-xl">DU HAST GEWONNEN!</div>
+                    <div className="text-cyan-300 text-sm mt-2">100 GLIBITS ERREICHT</div>
+                  </div>
+                </div>
+              )}
+
               {/* Bugs */}
               <AnimatePresence>
                 {bugs.map((bug) => (
@@ -543,22 +764,32 @@ export default function Home() {
                 ))}
               </AnimatePresence>
 
-              {/* Game Message */}
               {gameMessage && (
                 <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black/80 px-4 py-2 rounded-lg text-sm z-10">
                   {gameMessage}
                 </div>
               )}
 
-              {/* Start/Stop Button */}
-              <button
-                onClick={toggleGame}
-                onMouseEnter={() => setCursorVariant("hover")}
-                onMouseLeave={() => setCursorVariant("default")}
-                className="absolute bottom-2 right-2 bg-black/50 border border-cyan-500/50 rounded-lg px-4 py-2 text-sm text-cyan-300 hover:bg-cyan-900/30 transition-all"
-              >
-                {gameActive ? '⏸️ PAUSE' : '▶️ START'}
-              </button>
+              {/* Game Controls */}
+              <div className="absolute bottom-2 right-2 flex gap-2">
+                <button
+                  onClick={resetGame}
+                  onMouseEnter={() => setCursorVariant("hover")}
+                  onMouseLeave={() => setCursorVariant("default")}
+                  className="bg-black/50 border border-purple-500/50 rounded-lg px-3 py-2 text-xs text-purple-300 hover:bg-purple-900/30 transition-all"
+                >
+                  🔄 RESET
+                </button>
+                <button
+                  onClick={toggleGame}
+                  onMouseEnter={() => setCursorVariant("hover")}
+                  onMouseLeave={() => setCursorVariant("default")}
+                  className="bg-black/50 border border-cyan-500/50 rounded-lg px-4 py-2 text-sm text-cyan-300 hover:bg-cyan-900/30 transition-all"
+                  disabled={gameWon}
+                >
+                  {gameActive ? '⏸️ PAUSE' : gameWon ? '🏆 GEWONNEN' : '▶️ START'}
+                </button>
+              </div>
             </div>
 
             {/* Input Field */}
@@ -569,7 +800,7 @@ export default function Home() {
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder={gameActive ? "Tippe das Wort..." : "Spiel starten..."}
-                disabled={!gameActive}
+                disabled={!gameActive || gameWon}
                 className="flex-1 bg-black/50 border border-cyan-500/50 rounded-lg px-4 py-2 text-cyan-300 placeholder-cyan-700 focus:outline-none focus:border-cyan-400 uppercase"
                 autoComplete="off"
                 spellCheck="false"
@@ -581,7 +812,18 @@ export default function Home() {
 
             {/* Instructions */}
             <div className="mt-2 text-[10px] text-cyan-500/50 text-center">
-              Tippe die Wörter der Bugs um sie zu besiegen! • 15 Mana pro Kill • Backspace leert
+              Tippe die Wörter der Bugs um sie zu besiegen! • Combos geben extra Mana & Glibits • 100 Glibits = Sieg
+            </div>
+          </div>
+
+          {/* XP BAR */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-sm">
+              <span className="text-cyan-300">EXPERIENCE</span>
+              <span className="text-yellow-400">LVL {playerLevel} ▸ {playerLevel + 1}</span>
+            </div>
+            <div className="w-full bg-gray-700 h-4 rounded-full overflow-hidden border border-cyan-500/50">
+              <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-600" style={{ width: "75%" }} />
             </div>
           </div>
 
@@ -680,24 +922,14 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Experience Bar */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span className="text-cyan-300">EXPERIENCE</span>
-              <span className="text-yellow-400">LVL {playerLevel} ▸ {playerLevel + 1}</span>
-            </div>
-            <div className="w-full bg-gray-700 h-4 rounded-full overflow-hidden border border-cyan-500/50">
-              <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-600" style={{ width: "75%" }} />
-            </div>
-          </div>
-
-          {/* Footer */}
+          {/* FOOTER */}
           <div className="flex justify-between text-xs text-cyan-500/70 border-t border-cyan-500/30 pt-4 relative">
-            <span className="text-red-400">❤️ HP: {playerHP}/8923</span>
-            <span className="text-blue-400">⚡ MANA: {playerMana}/560</span>
             <span className="text-yellow-400 font-bold relative">
               GOLD: 🪙 {gold.toLocaleString()}
             </span>
+            {maxCombo > 0 && (
+              <span className="text-orange-400">BEST COMBO: x{maxCombo}</span>
+            )}
           </div>
         </motion.div>
       </main>
@@ -727,14 +959,41 @@ export default function Home() {
           font-size: 10px;
         }
 
-        /* HACKER-FILM GLITCH EFFEKT */
+        /* Cube Clip Path */
+        .clip-cube {
+          clip-path: polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%);
+        }
+
+        /* MARIO BROS TEXT STYLE */
+        .mario-text {
+          background: linear-gradient(135deg, #f1c40f 0%, #e67e22 50%, #f1c40f 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          text-shadow: 
+            4px 4px 0 #c0392b,
+            2px 2px 0 #2980b9,
+            0 0 10px rgba(241, 196, 15, 0.5);
+          font-weight: 900;
+          letter-spacing: 2px;
+          animation: mario-float 3s ease-in-out infinite;
+        }
+
+        @keyframes mario-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-5px); }
+        }
+
+        /* HACKER-FILM GLITCH + ZUCKEN */
         .hacker-glitch {
           position: relative;
           display: inline-block;
-          color: #00ffff; /* Cyan */
-          animation: glitch-flicker 3s infinite;
+          color: #00ffff;
+          animation: 
+            glitch-flicker 3s infinite,
+            glitch-twitch 0.5s infinite;
           text-shadow: 
-            0 0 5px #ff00ff, /* Pink */
+            0 0 5px #ff00ff,
             0 0 2px #00ffff;
         }
 
@@ -753,14 +1012,27 @@ export default function Home() {
 
         .hacker-glitch::before {
           animation: glitch-offset-1 2s infinite;
-          color: #ff00ff; /* Pink */
+          color: #ff00ff;
           z-index: -1;
         }
 
         .hacker-glitch::after {
           animation: glitch-offset-2 2.5s infinite;
-          color: #00ffff; /* Cyan */
+          color: #00ffff;
           z-index: -2;
+        }
+
+        @keyframes glitch-twitch {
+          0%, 100% { transform: translate(0); }
+          10% { transform: translate(-1px, 0.5px); }
+          20% { transform: translate(1px, -0.5px); }
+          30% { transform: translate(-0.5px, 1px); }
+          40% { transform: translate(0.5px, -1px); }
+          50% { transform: translate(0); }
+          60% { transform: translate(0.5px, 0.5px); }
+          70% { transform: translate(-0.5px, -0.5px); }
+          80% { transform: translate(1px, 0); }
+          90% { transform: translate(-1px, 0); }
         }
 
         @keyframes glitch-flicker {
