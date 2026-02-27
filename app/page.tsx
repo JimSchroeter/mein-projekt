@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 // Interface für Gold-Transaktionen
 interface GoldTransaction {
@@ -60,6 +60,7 @@ export default function Home() {
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
   const [comboPopup, setComboPopup] = useState({ show: false, text: "", x: 0, y: 0 });
+  const [comboText, setComboText] = useState<{ show: boolean; text: string }>({ show: false, text: "" });
   
   // GLIBITS
   const [glibits, setGlibits] = useState(0);
@@ -67,6 +68,10 @@ export default function Home() {
   
   // Level basierend auf Alter
   const [playerLevel] = useState(36);
+  
+  // Refs für flüssigen Cursor
+  const rafRef = useRef<number>();
+  const mousePosRef = useRef({ x: 0, y: 0 });
   
   // Game Over Nachrichten (motivierend-passiv-aggressiv)
   const gameOverMessages: GameOverMessage[] = [
@@ -116,12 +121,21 @@ export default function Home() {
     setIsMounted(true);
   }, []);
 
-  // Cursor Tracking
+  // OPTIMIERTES Cursor Tracking - KEINE VERZÖGERUNG MEHR
   useEffect(() => {
     if (!isMounted) return;
     
-    const mouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
+    const updateMousePosition = (e: MouseEvent) => {
+      // Direkt den Ref aktualisieren für minimale Latenz
+      mousePosRef.current = { x: e.clientX, y: e.clientY };
+      
+      // State nur bei Bedarf über RAF aktualisieren (für Rendering)
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+      rafRef.current = requestAnimationFrame(() => {
+        setMousePosition(mousePosRef.current);
+      });
     };
 
     const style = document.createElement('style');
@@ -135,11 +149,14 @@ export default function Home() {
     `;
     document.head.appendChild(style);
 
-    window.addEventListener("mousemove", mouseMove, { passive: true });
+    window.addEventListener("mousemove", updateMousePosition, { passive: true });
     
     return () => {
-      window.removeEventListener("mousemove", mouseMove);
+      window.removeEventListener("mousemove", updateMousePosition);
       document.head.removeChild(style);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
     };
   }, [isMounted]);
 
@@ -200,44 +217,54 @@ export default function Home() {
     }
   }, [playerMana, gameActive, gameWon, gameOver]);
 
-  // TYPING DEFENDER GAME LOGIC
+  // TYPING DEFENDER GAME LOGIC - MIT BALANCE-ÄNDERUNGEN
   useEffect(() => {
     if (!gameActive || gameWon || gameOver) return;
 
+    // Maximale Bugs gleichzeitig: 8
+    const MAX_BUGS = 8;
+    
+    // Spawn-Intervall - angepasst für bessere Balance
     const spawnInterval = setInterval(() => {
-      const randomWord = bugWords[Math.floor(Math.random() * bugWords.length)];
-      const newBug: Bug = {
-        id: Date.now() + Math.random(),
-        x: Math.random() * 70 + 15,
-        y: Math.random() * 40 + 5,
-        text: randomWord,
-        hp: randomWord.length * 10,
-        maxHp: randomWord.length * 10,
-      };
-      setBugs(prev => [...prev, newBug]);
-    }, 2000 / wave);
+      setBugs(prev => {
+        if (prev.length >= MAX_BUGS) return prev;
+        
+        const randomWord = bugWords[Math.floor(Math.random() * bugWords.length)];
+        const newBug: Bug = {
+          id: Date.now() + Math.random(),
+          x: Math.random() * 70 + 15,
+          y: 5,
+          text: randomWord,
+          hp: randomWord.length * 8, // Weniger HP für schnellere Kills
+          maxHp: randomWord.length * 8,
+        };
+        return [...prev, newBug];
+      });
+    }, 2500 / wave); // Langsamerer Spawn
 
+    // Fallgeschwindigkeit - reduziert für bessere Spielbarkeit
     const moveInterval = setInterval(() => {
       setBugs(prev => 
         prev.map(bug => ({
           ...bug,
-          y: bug.y + 0.5,
+          y: bug.y + 0.35, // Langsameres Fallen
         })).filter(bug => {
           // Bug erreicht unteren Screen -> Schaden + Combo-Reset
           if (bug.y > 85) {
             setPlayerHP(hp => {
-              const newHp = Math.max(hp - 30, 0);
+              const newHp = Math.max(hp - 25, 0); // Weniger Schaden
               if (newHp <= 0) {
-                // Tod durch HP = 0
                 setGameOverType("hp");
                 setGameOver(true);
                 setGameActive(false);
               }
               return newHp;
             });
-            setGameMessage(`❌ Bug entkommen! -30 HP`);
+            setGameMessage(`❌ Bug entkommen! -25 HP`);
             // Combo-Reset bei Schaden
             setCombo(0);
+            setComboText({ show: true, text: "COMBO RESET!" });
+            setTimeout(() => setComboText({ show: false, text: "" }), 1000);
             setTimeout(() => setGameMessage(""), 1500);
             return false;
           }
@@ -305,24 +332,26 @@ export default function Home() {
     }, 500);
   };
 
-  // Tipp-Eingabe verarbeiten
+  // Tipp-Eingabe verarbeiten - FIXED (kein Reset während Eingabe)
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toUpperCase();
     setCurrentInput(value);
 
+    // Prüfen ob ein Bug getroffen wurde
     const matchedBugIndex = bugs.findIndex(bug => bug.text === value);
     
     if (matchedBugIndex !== -1) {
       const bug = bugs[matchedBugIndex];
       
       if (playerMana >= 15) {
-        // Alte Combo für Berechnung merken
-        const oldCombo = combo;
-        
         // Combo erhöhen (nur bei erfolgreichem Kill)
         const newCombo = combo + 1;
         setCombo(newCombo);
         if (newCombo > maxCombo) setMaxCombo(newCombo);
+        
+        // Combat-Text für Combo
+        setComboText({ show: true, text: `COMBO x${newCombo}!` });
+        setTimeout(() => setComboText({ show: false, text: "" }), 1500);
         
         // GLIBITS berechnen: (Combo - 1) Glibits, mindestens 1 bei x2 Combo
         let glibitReward = 0;
@@ -353,12 +382,12 @@ export default function Home() {
         setScore(prev => prev + 100 + (newCombo * 10));
         setBugsKilled(prev => prev + 1);
         
-        // Combo Popup anzeigen (nur wenn Combo gestiegen und >1)
+        // Combo Popup anzeigen (nur wenn Combo >1)
         if (newCombo > 1) {
           showComboPopup(newCombo, bug.x, bug.y - 5);
         }
         
-        setGameMessage(`✅ +50 Gold! Combo x${newCombo}`);
+        setGameMessage(`✅ +50 Gold!`);
         
         if (Math.random() > 0.7) {
           setWave(prev => prev + 1);
@@ -372,11 +401,9 @@ export default function Home() {
       }
       
       setTimeout(() => setGameMessage(""), 1500);
-    } else if (value.length > 0) {
-      // Falsche Eingabe - Combo zurücksetzen (Combo x0)
-      setCombo(0);
-      setGameMessage("❌ Falsch! Combo reset!");
-      setTimeout(() => setGameMessage(""), 800);
+    } else if (value.length === 3 || value.length === 4 || value.length === 5) {
+      // Nur bei typischen Wortlängen prüfen, ob es ein Fehler sein könnte
+      // Aber noch nicht zurücksetzen - warten auf vollständige Eingabe
     }
   };
 
@@ -384,6 +411,18 @@ export default function Home() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace') {
       setCurrentInput("");
+    } else if (e.key === 'Enter' && currentInput.length > 0) {
+      // Bei Enter prüfen, ob das Wort falsch ist
+      const matched = bugs.some(bug => bug.text === currentInput);
+      if (!matched && currentInput.length > 0) {
+        // Falsche Eingabe bestätigt - Combo zurücksetzen
+        setCombo(0);
+        setComboText({ show: true, text: "COMBO RESET!" });
+        setTimeout(() => setComboText({ show: false, text: "" }), 1000);
+        setGameMessage("❌ Falsches Wort!");
+        setTimeout(() => setGameMessage(""), 800);
+        setCurrentInput("");
+      }
     }
   };
 
@@ -404,21 +443,21 @@ export default function Home() {
     setTimeout(() => setGameMessage(""), 2000);
   };
 
-  // Cursor Variants
+  // Cursor Variants - OPTIMIERT (weniger spring physics)
   const cursorVariants = {
     default: {
       x: mousePosition.x - 16,
       y: mousePosition.y - 16,
       rotate: 45,
       scale: 1.2,
-      transition: { type: "spring", stiffness: 300, damping: 30 }
+      transition: { type: "just", stiffness: 0 } // Minimale Verzögerung
     },
     hover: {
       x: mousePosition.x - 16,
       y: mousePosition.y - 16,
       rotate: 45,
       scale: 1.4,
-      transition: { type: "spring", stiffness: 300, damping: 30 }
+      transition: { type: "just", stiffness: 0 }
     }
   };
 
@@ -432,6 +471,23 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen font-gaming overflow-hidden" style={{ cursor: 'none' }}>
+      {/* Combat Text am unteren Bildschirmrand */}
+      <AnimatePresence>
+        {comboText.show && (
+          <motion.div
+            className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[90] text-2xl font-bold whitespace-nowrap"
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -50, opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="text-orange-400 drop-shadow-[0_0_10px_rgba(255,165,0,0.7)]">
+              {comboText.text}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Game Over Popup - Mana Version */}
       <AnimatePresence>
         {gameOver && gameOverType === "mana" && (
@@ -465,7 +521,7 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* Game Over Popup - HP Version (Grabstein) */}
+      {/* Game Over Popup - HP Version (Grabstein mit Gras, Erde und Blume) */}
       <AnimatePresence>
         {gameOver && gameOverType === "hp" && (
           <motion.div
@@ -475,29 +531,59 @@ export default function Home() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-gradient-to-b from-gray-800 to-black border-2 border-gray-600 rounded-2xl p-8 max-w-md text-center space-y-6"
+              className="bg-gradient-to-b from-green-900/50 to-black border-2 border-gray-600 rounded-2xl p-8 max-w-md text-center space-y-6 relative overflow-hidden"
               initial={{ scale: 0.8, y: 50 }}
               animate={{ scale: 1, y: 0 }}
               transition={{ type: "spring", damping: 15 }}
             >
-              <h2 className="text-3xl font-bold text-gray-400">R.I.P.</h2>
-              <div className="relative w-24 h-32 mx-auto">
-                {/* Grabstein */}
-                <div className="absolute bottom-0 w-24 h-20 bg-gray-700 rounded-t-lg"></div>
-                <div className="absolute bottom-20 w-20 h-12 bg-gray-600 rounded-t-lg left-2"></div>
-                <div className="absolute bottom-16 w-16 h-24 bg-gray-500 rounded-t-lg left-4 flex items-center justify-center">
-                  <span className="text-red-500 font-bold text-xl transform -rotate-90">LOSER</span>
-                </div>
-                {/* Kreuz */}
-                <div className="absolute top-0 left-10 w-2 h-10 bg-gray-400"></div>
-                <div className="absolute top-2 left-6 w-10 h-2 bg-gray-400"></div>
+              {/* Gras am unteren Rand */}
+              <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-green-800 to-green-600">
+                <div className="absolute top-0 left-4 w-3 h-4 bg-green-700 rounded-t-lg transform -rotate-6"></div>
+                <div className="absolute top-0 left-10 w-3 h-5 bg-green-700 rounded-t-lg transform rotate-3"></div>
+                <div className="absolute top-0 left-20 w-3 h-6 bg-green-700 rounded-t-lg transform -rotate-12"></div>
+                <div className="absolute top-0 right-4 w-3 h-4 bg-green-700 rounded-t-lg transform rotate-12"></div>
+                <div className="absolute top-0 right-12 w-3 h-5 bg-green-700 rounded-t-lg transform -rotate-3"></div>
               </div>
-              <div className="text-red-400 text-lg">DU BIST GESTORBEN!</div>
-              <div className="text-gray-400 text-sm">Immerhin hast du {bugsKilled} Bugs gekillt...</div>
+              
+              {/* Erde */}
+              <div className="absolute bottom-12 left-0 right-0 h-4 bg-gradient-to-b from-brown-700 to-brown-900"></div>
+              
+              <h2 className="text-3xl font-bold text-gray-400 relative z-10">R.I.P.</h2>
+              
+              {/* Grabstein (ohne Kreuz) */}
+              <div className="relative w-28 h-36 mx-auto z-10">
+                {/* Grabstein Basis */}
+                <div className="absolute bottom-0 w-28 h-24 bg-gray-700 rounded-t-lg border-2 border-gray-500"></div>
+                <div className="absolute bottom-24 w-24 h-10 bg-gray-600 rounded-t-lg left-2 border-2 border-gray-500"></div>
+                <div className="absolute bottom-20 w-20 h-20 bg-gray-500 rounded-t-lg left-4 border-2 border-gray-400 flex items-center justify-center">
+                  {/* Eingemeißelter "LOSER" Schriftzug */}
+                  <span className="text-red-600 font-bold text-xl transform -rotate-90 opacity-80" 
+                        style={{ textShadow: '2px 2px 0 #333, -1px -1px 0 #999' }}>
+                    LOSER
+                  </span>
+                </div>
+                
+                {/* Blume die aus dem Gras wächst */}
+                <div className="absolute -bottom-2 left-12 z-20">
+                  {/* Stiel */}
+                  <div className="w-1 h-10 bg-green-600 mx-auto"></div>
+                  {/* Blüte */}
+                  <div className="relative -top-10">
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full absolute -left-2 top-0"></div>
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full absolute left-2 top-0"></div>
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full absolute left-0 -top-2"></div>
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full absolute left-0 top-2"></div>
+                    <div className="w-4 h-4 bg-red-500 rounded-full absolute left-0 top-0 z-10"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="text-red-400 text-lg relative z-10">DU BIST GESTORBEN!</div>
+              <div className="text-gray-400 text-sm relative z-10">Immerhin hast du {bugsKilled} Bugs gekillt...</div>
               
               <button
                 onClick={resetGame}
-                className="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-800 rounded-lg text-white font-bold hover:scale-105 transition-all"
+                className="relative z-10 px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-800 rounded-lg text-white font-bold hover:scale-105 transition-all"
               >
                 🪦 WIEDERBELEBEN
               </button>
@@ -634,11 +720,16 @@ export default function Home() {
         ))}
       </AnimatePresence>
 
-      {/* Custom Frostmourne Cursor */}
+      {/* Custom Frostmourne Cursor - MIT OPTIMIERTER PERFORMANCE */}
       <motion.div
         className="fixed pointer-events-none z-50"
-        variants={cursorVariants}
-        animate={cursorVariant}
+        animate={{
+          x: mousePosition.x - 16,
+          y: mousePosition.y - 16,
+          rotate: 45,
+          scale: cursorVariant === "hover" ? 1.4 : 1.2
+        }}
+        transition={{ type: "tween", duration: 0 }} // KEINE Verzögerung!
       >
         <div className="relative w-10 h-10">
           <svg viewBox="0 0 100 100" className="w-full h-full">
@@ -708,7 +799,7 @@ export default function Home() {
           onHoverStart={() => setCursorVariant("hover")}
           onHoverEnd={() => setCursorVariant("default")}
         >
-          {/* SUPER MARIO BROS NAME */}
+          {/* SUPER MARIO BROS NAME - VERBESSERT MIT MONSTERNS */}
           <div className="text-center space-y-2">
             <div className="relative inline-block">
               <h1 className="text-5xl sm:text-6xl font-bold relative z-10">
@@ -727,39 +818,63 @@ export default function Home() {
                 </span>
               </h1>
               
-              {/* Mario Dekorationen */}
-              <div className="absolute -top-8 -left-10 w-12 h-12 animate-bounce" style={{ animationDuration: '2s' }}>
-                <div className="w-10 h-10 bg-red-500 rounded-full border-4 border-brown-700 shadow-lg relative">
-                  <div className="absolute top-2 left-2 w-2 h-2 bg-white rounded-full"></div>
-                  <div className="absolute top-2 right-2 w-2 h-2 bg-white rounded-full"></div>
-                  <div className="absolute bottom-2 left-3 w-4 h-2 bg-brown-700 rounded-full"></div>
+              {/* MARIO HINTERGRUND (Berge/Wolken) */}
+              <div className="absolute -top-16 left-0 right-0 h-20 pointer-events-none">
+                {/* Berge im Hintergrund */}
+                <div className="absolute bottom-0 left-5 w-16 h-12 bg-green-800/30 rounded-t-full transform -rotate-3"></div>
+                <div className="absolute bottom-0 left-16 w-20 h-16 bg-green-700/30 rounded-t-full"></div>
+                <div className="absolute bottom-0 right-5 w-16 h-12 bg-green-800/30 rounded-t-full transform rotate-3"></div>
+                <div className="absolute bottom-0 right-16 w-20 h-16 bg-green-700/30 rounded-t-full"></div>
+                
+                {/* Wolken */}
+                <div className="absolute top-0 left-10 w-12 h-6 bg-white/20 rounded-full"></div>
+                <div className="absolute top-2 left-14 w-8 h-5 bg-white/20 rounded-full"></div>
+                <div className="absolute top-0 right-10 w-12 h-6 bg-white/20 rounded-full"></div>
+                <div className="absolute top-2 right-14 w-8 h-5 bg-white/20 rounded-full"></div>
+              </div>
+              
+              {/* MARIO ENEMIES */}
+              {/* Goomba (links oben) */}
+              <div className="absolute -top-8 -left-12 w-10 h-10 animate-bounce" style={{ animationDuration: '2s' }}>
+                <div className="w-8 h-6 bg-brown-600 rounded-t-lg mx-auto"></div>
+                <div className="w-10 h-4 bg-brown-700 rounded-b-lg"></div>
+                <div className="flex justify-between px-2 -mt-1">
+                  <div className="w-1 h-2 bg-white rounded-full"></div>
+                  <div className="w-1 h-2 bg-white rounded-full"></div>
+                </div>
+                <div className="flex justify-between mt-1">
+                  <div className="w-1 h-2 bg-brown-800 rounded-full"></div>
+                  <div className="w-1 h-2 bg-brown-800 rounded-full"></div>
                 </div>
               </div>
-
-              <div className="absolute -bottom-4 right-0 flex gap-1">
-                <div className="w-4 h-4 bg-yellow-400 rounded-sm shadow-md animate-pulse"></div>
-                <div className="w-4 h-4 bg-yellow-400 rounded-sm shadow-md animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-4 h-4 bg-yellow-400 rounded-sm shadow-md animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-              </div>
-
-              <div className="absolute top-0 -right-8 w-8 h-8">
-                <div className="w-6 h-5 bg-red-600 rounded-t-lg mx-auto relative">
-                  <div className="w-2 h-2 bg-white rounded-full absolute top-1 left-1"></div>
-                  <div className="w-2 h-2 bg-white rounded-full absolute top-1 right-1"></div>
+              
+              {/* Koopa (rechts oben) */}
+              <div className="absolute -top-10 -right-12 w-12 h-10 animate-pulse">
+                <div className="w-10 h-5 bg-green-700 rounded-t-lg mx-auto"></div>
+                <div className="w-8 h-4 bg-green-600 mx-auto"></div>
+                <div className="flex justify-between px-2">
+                  <div className="w-1 h-3 bg-yellow-600 rounded-full"></div>
+                  <div className="w-1 h-3 bg-yellow-600 rounded-full"></div>
                 </div>
+              </div>
+              
+              {/* Pilz (rechts unten) */}
+              <div className="absolute -bottom-6 -right-8 w-8 h-8 animate-bounce" style={{ animationDuration: '3s' }}>
+                <div className="w-6 h-3 bg-red-600 rounded-t-lg mx-auto"></div>
                 <div className="w-7 h-4 bg-orange-400 rounded-b-lg mx-auto"></div>
+                <div className="w-1 h-2 bg-white absolute top-1 left-3"></div>
               </div>
-
-              <div className="absolute -bottom-2 -left-8 w-16 h-8">
-                <div className="w-4 h-6 bg-green-700 rounded-t-lg inline-block mx-0.5"></div>
-                <div className="w-4 h-8 bg-green-700 rounded-t-lg inline-block mx-0.5"></div>
-                <div className="w-4 h-5 bg-green-700 rounded-t-lg inline-block mx-0.5"></div>
-                <div className="w-4 h-7 bg-green-700 rounded-t-lg inline-block mx-0.5"></div>
+              
+              {/* Stern (links unten) */}
+              <div className="absolute -bottom-8 -left-8 w-8 h-8 animate-spin" style={{ animationDuration: '4s' }}>
+                <div className="w-6 h-6 bg-yellow-400 rotate-45 transform origin-center"></div>
               </div>
-
-              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-12 h-6">
-                <div className="w-10 h-4 bg-blue-300 rounded-full opacity-70 blur-sm"></div>
-                <div className="w-8 h-3 bg-white rounded-full absolute top-1 left-2 opacity-50"></div>
+              
+              {/* Münzen */}
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 flex gap-1">
+                <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
+                <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
               </div>
             </div>
             
@@ -853,16 +968,28 @@ export default function Home() {
                 <span className="text-xs bg-black/50 px-2 py-1 rounded text-cyan-400">WAVE {wave}</span>
                 <span className="text-xs bg-black/50 px-2 py-1 rounded text-yellow-400">SCORE {score}</span>
                 <span className="text-xs bg-black/50 px-2 py-1 rounded text-green-400">KILLS {bugsKilled}</span>
-                {combo > 1 && (
-                  <span className="text-xs bg-black/50 px-2 py-1 rounded text-orange-400">COMBO x{combo}</span>
-                )}
               </div>
             </div>
 
-            {/* HP und Mana Anzeige */}
-            <div className="flex gap-4 mb-4 bg-black/40 p-2 rounded-lg">
-              <span className="text-red-400 text-sm">❤️ HP: {playerHP}</span>
-              <span className="text-blue-400 text-sm">⚡ MANA: {playerMana}</span>
+            {/* HP, Mana und Combo Anzeigen */}
+            <div className="flex justify-between items-center mb-4 bg-black/40 p-2 rounded-lg">
+              <div className="flex gap-4">
+                <span className="text-red-400 text-sm">❤️ HP: {playerHP}</span>
+                <span className="text-blue-400 text-sm">⚡ MANA: {playerMana}</span>
+              </div>
+              <div className="flex gap-2">
+                {combo > 1 && (
+                  <span className="text-xs bg-black/50 px-2 py-1 rounded text-orange-400 border border-orange-500/50">
+                    COMBO x{combo}
+                  </span>
+                )}
+                {/* BEST COMBO oben links im Spielfenster */}
+                {maxCombo > 0 && (
+                  <span className="text-xs bg-black/50 px-2 py-1 rounded text-purple-400 border border-purple-500/50">
+                    BEST x{maxCombo}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Game Area */}
@@ -1009,56 +1136,48 @@ export default function Home() {
                 <div className="text-white text-sm">Intel Core i7-12700K</div>
                 <div className="text-cyan-400 text-xs">4.8GHz (OC)</div>
               </div>
-
               {/* RAM */}
               <div className="bg-black/60 border border-purple-500/30 rounded-lg p-3 text-center hover:border-purple-500 transition-all">
                 <div className="text-purple-400 font-bold text-xs mb-1">[EPIC]</div>
                 <div className="text-white text-sm">Corsair Vengeance RGB PRO</div>
                 <div className="text-purple-300 text-xs">32GB (2x16) DDR4 3600MHz</div>
               </div>
-
               {/* GPU */}
               <div className="bg-black/60 border border-yellow-500/30 rounded-lg p-3 text-center hover:border-yellow-500 transition-all">
                 <div className="text-yellow-400 font-bold text-xs mb-1">👑 [LEGENDARY]</div>
                 <div className="text-white text-sm">Gigabyte RTX 3070 Ti</div>
                 <div className="text-cyan-400 text-xs">8GB GDDR6X</div>
               </div>
-
               {/* Mainboard */}
               <div className="bg-black/60 border border-blue-500/30 rounded-lg p-3 text-center hover:border-blue-500 transition-all">
                 <div className="text-blue-400 font-bold text-xs mb-1">[RARE]</div>
                 <div className="text-white text-sm">MSI Pro Z690-A</div>
                 <div className="text-blue-300 text-xs">DDR4 • PCIe 5.0</div>
               </div>
-
               {/* SSD */}
               <div className="bg-black/60 border border-purple-500/30 rounded-lg p-3 text-center hover:border-purple-500 transition-all">
                 <div className="text-purple-400 font-bold text-xs mb-1">[EPIC]</div>
                 <div className="text-white text-sm">Samsung 980 PRO</div>
                 <div className="text-purple-300 text-xs">1TB NVMe PCIe 4.0</div>
               </div>
-
               {/* PSU */}
               <div className="bg-black/60 border border-blue-500/30 rounded-lg p-3 text-center hover:border-blue-500 transition-all">
                 <div className="text-blue-400 font-bold text-xs mb-1">[RARE]</div>
                 <div className="text-white text-sm">be quiet! Pure Power 11 FM</div>
                 <div className="text-blue-300 text-xs">1000W • 80+ Gold</div>
               </div>
-
               {/* Case */}
               <div className="bg-black/60 border border-blue-500/30 rounded-lg p-3 text-center hover:border-blue-500 transition-all">
                 <div className="text-blue-400 font-bold text-xs mb-1">[RARE]</div>
                 <div className="text-white text-sm">be quiet! Dark Base 900 Pro</div>
                 <div className="text-blue-300 text-xs">Full Tower • Soundproof</div>
               </div>
-
               {/* Monitor */}
               <div className="bg-black/60 border border-blue-500/30 rounded-lg p-3 text-center hover:border-blue-500 transition-all">
                 <div className="text-blue-400 font-bold text-xs mb-1">[RARE]</div>
                 <div className="text-white text-sm">ASUS MG278Q</div>
                 <div className="text-blue-300 text-xs">144Hz • 1ms • 2K WQHD</div>
               </div>
-
               {/* Webcam */}
               <div className="bg-black/60 border border-gray-500/30 rounded-lg p-3 text-center hover:border-gray-500 transition-all">
                 <div className="text-gray-400 font-bold text-xs mb-1">[COMMON]</div>
@@ -1092,14 +1211,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* FOOTER */}
-          <div className="flex justify-between text-xs text-cyan-500/70 border-t border-cyan-500/30 pt-4 relative">
-            <span className="text-yellow-400 font-bold relative">
+          {/* FOOTER (nur Gold) */}
+          <div className="flex justify-center text-xs text-cyan-500/70 border-t border-cyan-500/30 pt-4">
+            <span className="text-yellow-400 font-bold">
               GOLD: 🪙 {gold.toLocaleString()}
             </span>
-            {maxCombo > 0 && (
-              <span className="text-orange-400">BEST COMBO: x{maxCombo}</span>
-            )}
           </div>
         </motion.div>
       </main>
@@ -1122,7 +1238,6 @@ export default function Home() {
 
         input:disabled {
           opacity: 0.5;
-          cursor: none !important;
         }
 
         input::placeholder {
