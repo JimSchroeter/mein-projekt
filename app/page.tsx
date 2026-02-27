@@ -89,24 +89,6 @@ export default function Home() {
     return () => window.removeEventListener("mousemove", mouseMove);
   }, [isMounted]);
 
-  // Anime background rotation
-  const [bgImage, setBgImage] = useState(0);
-  const animeBackgrounds = [
-    "https://images.unsplash.com/photo-1578632749014-ca77efd052eb?q=80&w=2070",
-    "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2070",
-    "https://images.unsplash.com/photo-1563089145-599f8f12f6e3?q=80&w=2070",
-    "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=2070",
-  ];
-
-  useEffect(() => {
-    if (!isMounted) return;
-    
-    const interval = setInterval(() => {
-      setBgImage((prev) => (prev + 1) % animeBackgrounds.length);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [isMounted]);
-
   // Frostmourne cursor variants
   const cursorVariants = {
     default: {
@@ -218,14 +200,11 @@ export default function Home() {
         </div>
       </motion.div>
 
-      {/* Animated Anime Background */}
-      <motion.div
+      {/* Animated Anime Background - SINGLE STATIC IMAGE */}
+      <div
         className="fixed inset-0 z-0"
-        animate={{
-          backgroundImage: `url(${animeBackgrounds[bgImage]})`,
-        }}
-        transition={{ duration: 2, ease: "easeInOut" }}
         style={{
+          backgroundImage: `url(https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=2070)`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           filter: "brightness(0.4) saturate(1.2)",
@@ -252,7 +231,7 @@ export default function Home() {
             }}
           />
         ))}
-      </motion.div>
+      </div>
 
       {/* Main content */}
       <main className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full max-w-4xl mx-auto px-6 sm:px-16 py-16">
@@ -776,4 +755,3 @@ export default function Home() {
     </div>
   );
 }
-
