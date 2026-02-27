@@ -46,6 +46,7 @@ export default function Home() {
   const [wave, setWave] = useState(1);
   const [score, setScore] = useState(0);
   const [bugsKilled, setBugsKilled] = useState(0);
+  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
   
   // Level basierend auf Alter
   const [playerLevel] = useState(36);
@@ -53,7 +54,9 @@ export default function Home() {
   // Bug-Wörter für das Spiel
   const bugWords = [
     "BUG", "ERROR", "404", "CRASH", "HACK", "GLITCH", "FIX", "CODE", 
-    "NULL", "UNDEFINED", "SYNTAX", "LOOP", "STACK", "HEAP", "BYTE"
+    "NULL", "UNDEFINED", "SYNTAX", "LOOP", "STACK", "HEAP", "BYTE",
+    "CONSOLE", "LOG", "FUNCTION", "RETURN", "IMPORT", "EXPORT", 
+    "CONST", "LET", "VAR", "IF", "ELSE", "FOR", "WHILE", "BREAK"
   ];
   
   // Floating particles
@@ -101,17 +104,20 @@ export default function Home() {
     };
   }, [isMounted]);
 
-  // Klick Handler für Strike Animation
+  // Klick Handler für Strike Animation - AN DER SCHWERTSPITZE
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      setStrikePosition({ x: e.clientX, y: e.clientY });
+      // Schwertspitze ist bei 45° Rotation etwa 20px nach rechts-oben versetzt
+      const swordTipX = mousePosition.x + 15;
+      const swordTipY = mousePosition.y - 15;
+      setStrikePosition({ x: swordTipX, y: swordTipY });
       setIsStriking(true);
       setTimeout(() => setIsStriking(false), 200);
     };
 
     window.addEventListener("click", handleClick);
     return () => window.removeEventListener("click", handleClick);
-  }, []);
+  }, [mousePosition]);
 
   // Gold income simulation
   useEffect(() => {
@@ -146,13 +152,13 @@ export default function Home() {
   useEffect(() => {
     if (!gameActive) return;
 
-    // Bug-Spawn-Intervall
+    // Bug-Spawn-Intervall - BEGRENZTER SICHTBARER BEREICH
     const spawnInterval = setInterval(() => {
       const randomWord = bugWords[Math.floor(Math.random() * bugWords.length)];
       const newBug: Bug = {
         id: Date.now() + Math.random(),
-        x: Math.random() * 80 + 10,
-        y: Math.random() * 60 + 10,
+        x: Math.random() * 70 + 15, // 15% bis 85% (besser sichtbar)
+        y: Math.random() * 40 + 5,   // 5% bis 45% (nie außerhalb)
         text: randomWord,
         hp: randomWord.length * 10,
         maxHp: randomWord.length * 10,
@@ -160,23 +166,24 @@ export default function Home() {
       setBugs(prev => [...prev, newBug]);
     }, 2000 / wave);
 
-    // Bug-Bewegung (nach unten kriechen)
+    // Bug-Bewegung (nach unten kriechen) - MIT BEGRENZUNG
     const moveInterval = setInterval(() => {
       setBugs(prev => 
         prev.map(bug => ({
           ...bug,
           y: bug.y + 0.5,
         })).filter(bug => {
-          if (bug.y > 90) {
-            setPlayerHP(hp => Math.max(hp - 50, 0));
-            setGameMessage(`❌ Bug entkommen! -50 HP`);
+          // Bei 85% verschwinden und Schaden verursachen (nie unsichtbar)
+          if (bug.y > 85) {
+            setPlayerHP(hp => Math.max(hp - 30, 0));
+            setGameMessage(`❌ Bug entkommen! -30 HP`);
             setTimeout(() => setGameMessage(""), 1500);
             return false;
           }
           return true;
         })
       );
-    }, 100);
+    }, 150);
 
     return () => {
       clearInterval(spawnInterval);
@@ -184,14 +191,16 @@ export default function Home() {
     };
   }, [gameActive, wave]);
 
-  // Tipp-Eingabe verarbeiten
+  // Tipp-Eingabe verarbeiten - GEFIXT (kein automatisches Löschen)
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toUpperCase();
     setCurrentInput(value);
 
+    // Prüfen ob ein Bug getroffen wurde
     const matchedBugIndex = bugs.findIndex(bug => bug.text === value);
     
     if (matchedBugIndex !== -1) {
+      // Bug getroffen!
       const bug = bugs[matchedBugIndex];
       
       if (playerMana >= 15) {
@@ -207,19 +216,16 @@ export default function Home() {
           setWave(prev => prev + 1);
           setGameMessage(`🌟 WAVE ${wave + 1}!`);
         }
+        
+        setCurrentInput("");
       } else {
         setGameMessage("❌ Nicht genug MANA!");
+        // Bei Mana-Mangel NICHT das Feld leeren, nur Nachricht zeigen
       }
       
-      setCurrentInput("");
       setTimeout(() => setGameMessage(""), 1500);
-    } else if (value.length > 0) {
-      setGameMessage("❌ Falsches Wort!");
-      setTimeout(() => {
-        setGameMessage("");
-        setCurrentInput("");
-      }, 500);
     }
+    // KEIN automatisches Löschen bei falscher Eingabe mehr!
   };
 
   // Backspace Handler
@@ -245,18 +251,20 @@ export default function Home() {
     setTimeout(() => setGameMessage(""), 2000);
   };
 
-  // Cursor Variants
+  // Cursor Variants - 45 GRAD GEDREHT
   const cursorVariants = {
     default: {
-      x: mousePosition.x - 19,
-      y: mousePosition.y - 19,
-      scale: 1,
+      x: mousePosition.x - 16,
+      y: mousePosition.y - 16,
+      rotate: 45, // 45 Grad gedreht
+      scale: 1.2, // 20% größer
       transition: { type: "spring", stiffness: 300, damping: 30 }
     },
     hover: {
-      x: mousePosition.x - 19,
-      y: mousePosition.y - 19,
-      scale: 1.2,
+      x: mousePosition.x - 16,
+      y: mousePosition.y - 16,
+      rotate: 45,
+      scale: 1.4, // Hover auch größer
       transition: { type: "spring", stiffness: 300, damping: 30 }
     }
   };
@@ -271,24 +279,35 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen font-gaming overflow-hidden" style={{ cursor: 'none' }}>
-      {/* Strike Animation */}
+      {/* Strike Animation - AN DER SCHWERTSPITZE */}
       <AnimatePresence>
         {isStriking && (
           <motion.div
+            key="strike"
             className="fixed pointer-events-none z-[60]"
-            style={{ left: strikePosition.x - 20, top: strikePosition.y - 20 }}
+            style={{ left: strikePosition.x - 15, top: strikePosition.y - 15 }}
             initial={{ scale: 0, opacity: 1 }}
             animate={{ scale: 1.5, opacity: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <svg width="40" height="40" viewBox="0 0 100 100">
+            <svg width="30" height="30" viewBox="0 0 100 100">
               <path
                 d="M20 20 L80 80 M80 20 L20 80"
-                stroke="#ff0000"
-                strokeWidth="4"
+                stroke="#ffaa00"
+                strokeWidth="6"
                 strokeLinecap="round"
+                filter="url(#glow)"
               />
+              <defs>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
             </svg>
           </motion.div>
         )}
@@ -319,13 +338,13 @@ export default function Home() {
         ))}
       </AnimatePresence>
 
-      {/* Custom Frostmourne Cursor */}
+      {/* Custom Frostmourne Cursor - 45° GEDREHT und 20% GRÖSSER */}
       <motion.div
         className="fixed pointer-events-none z-50"
         variants={cursorVariants}
         animate={cursorVariant}
       >
-        <div className="relative w-8 h-8">
+        <div className="relative w-10 h-10"> {/* Größe angepasst */}
           <svg viewBox="0 0 100 100" className="w-full h-full">
             <path
               d="M50 10 L60 40 L55 45 L52 60 L48 60 L45 45 L40 40 L50 10"
@@ -440,7 +459,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Character Bio */}
+          {/* Character Bio mit HACKER-FILM GLITCH EFFEKT */}
           <div className="space-y-3 text-cyan-300/80 border-l-4 border-cyan-500 pl-4 bg-black/30 p-4 rounded-r-lg">
             <p className="flex items-center gap-2">
               <span className="text-yellow-400">🏰</span> Location: {location}
@@ -450,7 +469,9 @@ export default function Home() {
             </p>
             <p className="flex items-center gap-2">
               <span className="text-purple-400">🖥️</span> Specializations: 
-              <span> Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage</span>
+              <span className="hacker-glitch" data-text=" Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage">
+                 Cloud Architecture • Zero Trust Security • SD-WAN • Infrastructure as Code • Root Cause Analysis • Packet Triage
+              </span>
             </p>
             <p className="flex items-center gap-2">
               <span className="text-green-400">📅</span> Born: 21.06.1989 (Level {playerLevel})
@@ -478,7 +499,7 @@ export default function Home() {
             </div>
           </a>
 
-          {/* TYPING DEFENDER MINIGAME - ERSTE VERSION */}
+          {/* TYPING DEFENDER MINIGAME */}
           <div className="bg-gradient-to-r from-purple-900/30 to-cyan-900/30 border border-cyan-500/30 rounded-xl p-4">
             <div className="flex justify-between items-center mb-4">
               <span className="text-cyan-300">⌨️ TYPING DEFENDER</span>
@@ -560,7 +581,7 @@ export default function Home() {
 
             {/* Instructions */}
             <div className="mt-2 text-[10px] text-cyan-500/50 text-center">
-              Tippe die Wörter der Bugs um sie zu besiegen! • 15 Mana pro Kill • Backspace leert sofort
+              Tippe die Wörter der Bugs um sie zu besiegen! • 15 Mana pro Kill • Backspace leert
             </div>
           </div>
 
@@ -704,6 +725,79 @@ export default function Home() {
 
         input::placeholder {
           font-size: 10px;
+        }
+
+        /* HACKER-FILM GLITCH EFFEKT */
+        .hacker-glitch {
+          position: relative;
+          display: inline-block;
+          color: #00ffff; /* Cyan */
+          animation: glitch-flicker 3s infinite;
+          text-shadow: 
+            0 0 5px #ff00ff, /* Pink */
+            0 0 2px #00ffff;
+        }
+
+        .hacker-glitch::before,
+        .hacker-glitch::after {
+          content: attr(data-text);
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: transparent;
+          pointer-events: none;
+          opacity: 0.4;
+        }
+
+        .hacker-glitch::before {
+          animation: glitch-offset-1 2s infinite;
+          color: #ff00ff; /* Pink */
+          z-index: -1;
+        }
+
+        .hacker-glitch::after {
+          animation: glitch-offset-2 2.5s infinite;
+          color: #00ffff; /* Cyan */
+          z-index: -2;
+        }
+
+        @keyframes glitch-flicker {
+          0%, 100% { opacity: 1; }
+          92% { opacity: 1; }
+          93% { opacity: 0.3; }
+          94% { opacity: 1; }
+          95% { opacity: 0.5; }
+          96% { opacity: 1; }
+          97% { opacity: 0.2; }
+          98% { opacity: 1; }
+        }
+
+        @keyframes glitch-offset-1 {
+          0%, 100% { transform: translate(0); }
+          10% { transform: translate(-2px, 1px); }
+          20% { transform: translate(2px, -1px); }
+          30% { transform: translate(-1px, 2px); }
+          40% { transform: translate(1px, -2px); }
+          50% { transform: translate(0); }
+          60% { transform: translate(2px, 1px); }
+          70% { transform: translate(-2px, -1px); }
+          80% { transform: translate(1px, 2px); }
+          90% { transform: translate(-1px, -2px); }
+        }
+
+        @keyframes glitch-offset-2 {
+          0%, 100% { transform: translate(0); }
+          15% { transform: translate(2px, -1px); }
+          25% { transform: translate(-2px, 1px); }
+          35% { transform: translate(1px, -2px); }
+          45% { transform: translate(-1px, 2px); }
+          55% { transform: translate(0); }
+          65% { transform: translate(-2px, -1px); }
+          75% { transform: translate(2px, 1px); }
+          85% { transform: translate(-1px, -2px); }
+          95% { transform: translate(1px, 2px); }
         }
       `}</style>
     </div>
